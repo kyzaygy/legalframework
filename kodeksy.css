@@ -1,0 +1,259 @@
+/* ============================================================
+   Кодексы РФ — общая система стилей
+   Прохладная бумага + бордо переплёта. Чтение в центре.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Golos+Text:wght@400;500;600;700&display=swap');
+
+:root {
+  /* — палитра — */
+  --paper:    #F6F7F9;
+  --surface:  #FFFFFF;
+  --ink:      #16181D;
+  --muted:    #5B6168;
+  --accent:   #6E2433;
+  --accent-soft: #f3e9eb;
+  --line:     #E3E6EA;
+
+  /* — гарнитуры — */
+  --serif: 'Literata', Georgia, 'Times New Roman', serif;
+  --sans:  'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* — параметры чтения (управляются Tweaks) — */
+  --read-size: 19px;
+  --read-lh:   1.7;
+  --read-measure: 38rem;     /* ~66–70 знаков */
+
+  /* — шкала интерфейса — */
+  --shell-max: 70rem;
+  --radius: 10px;
+  --shadow-card: 0 1px 2px rgba(22,24,29,.04), 0 8px 24px -16px rgba(22,24,29,.18);
+
+  color-scheme: light;
+}
+
+/* Контрастная тема: чище-белая бумага, темнее текст, плотнее линии.
+   Для чтения при плохом свете / для пожилых. */
+[data-theme="contrast"] {
+  --paper:   #FFFFFF;
+  --surface: #FFFFFF;
+  --ink:     #0B0C0F;
+  --muted:   #4A5057;
+  --accent:  #5E1C2A;
+  --accent-soft: #f0e2e4;
+  --line:    #C9CED5;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent-soft); }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+/* Видимый фокус для клавиатуры */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   ШАПКА  (тонкая, липкая)
+   ============================================================ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: 11px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--sans);
+  font-weight: 700;
+  letter-spacing: .14em;
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+  cursor: pointer;
+  background: none; border: 0; padding: 0;
+}
+.brand .brand-mark {
+  display: inline-block;
+  width: 7px; height: 18px;
+  background: var(--accent);
+  border-radius: 1px;
+  transform: translateY(2px);
+}
+.brand .brand-tag {
+  font-weight: 500;
+  letter-spacing: 0;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+/* строка поиска в шапке */
+.searchbox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 14px;
+  min-width: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+.searchbox:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.searchbox svg { flex: none; color: var(--muted); }
+.searchbox input {
+  flex: 1;
+  border: 0;
+  background: none;
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--ink);
+  min-width: 0;
+}
+.searchbox input::placeholder { color: var(--muted); }
+.searchbox input:focus { outline: none; }
+.searchbox .go {
+  flex: none;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.searchbox .go:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+
+/* ============================================================
+   ОБОЛОЧКА СТРАНИЦЫ
+   ============================================================ */
+.shell {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.foot {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+  color: var(--muted);
+  font-size: 12.5px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  margin-top: 56px;
+}
+.foot .foot-note { opacity: .85; }
+
+/* ============================================================
+   ТЕКСТ ЗАКОНА — СИГНАТУРА
+   Вложенная нумерация с висячими отступами, как в оригинале.
+   ============================================================ */
+.law {
+  font-family: var(--serif);
+  font-size: var(--read-size);
+  line-height: var(--read-lh);
+  color: var(--ink);
+  max-width: var(--read-measure);
+}
+.law p { margin: 0 0 .85em; }
+
+/* Узел = висячий отступ: маркер в своей колонке, текст переносится ровно */
+.law .node {
+  display: grid;
+  grid-template-columns: var(--marker-col, 2.1em) 1fr;
+  column-gap: .35em;
+  margin: 0 0 .7em;
+}
+.law .node > .mk {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-weight: 500;
+  user-select: all;            /* удобно копировать «2)» */
+  white-space: nowrap;
+}
+.law .node > .tx { min-width: 0; }
+.law .node > .tx > p:last-child,
+.law .node > .tx > .children:last-child > .node:last-child { margin-bottom: 0; }
+
+/* Часть (1. 2. 3.) — верхний уровень */
+.law .part > .mk { color: var(--ink); font-weight: 600; }
+
+/* Вложенный список (подпункты а) б) в) …) */
+.law .children {
+  margin-top: .55em;
+  --marker-col: 1.7em;
+}
+
+/* Маркер-буква подпункта — лёгкий бордовый оттенок */
+.law .sub > .mk { color: var(--accent); }
+
+/* Утратившие силу — приглушённо, текст не удаляется */
+.law .repealed { color: var(--muted); }
+.law .repealed .tx { font-style: italic; }
+.law .repealed-tag {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: .62em;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: .1em .5em;
+  margin-left: .4em;
+  white-space: nowrap;
+  vertical-align: .12em;
+}
+
+/* Заключительный абзац части (санкция) — без маркера, с отбивкой */
+.law .tail {
+  margin: .2em 0 0;
+}
+
+/* На телефоне текст чуть мельче и поля комфортные (бриф: 17px) */
+@media (max-width: 640px) {
+  .law { font-size: calc(var(--read-size) - 2px); }
+  .topbar-inner, .shell { padding-left: 18px; padding-right: 18px; }
+  .brand .brand-tag { display: none; }
+}

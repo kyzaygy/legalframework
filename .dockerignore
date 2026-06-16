@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.local
+*.log
+loader/.cache
+Кодексы РФ - прототип.html
+kodeksy.css
+kodeksy-data.js
+TZ_kodeksy_rf_mvp.md

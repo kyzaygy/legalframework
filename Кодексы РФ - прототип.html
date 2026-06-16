@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кодексы и Конституция РФ</title>
+<link rel="stylesheet" href="kodeksy.css">
+<style>
+  /* ===========================================================
+     ОБЩЕЕ
+     =========================================================== */
+  main { display: block; min-height: 60vh; }
+  .screen { animation: fade .22s ease both; }
+  @media (prefers-reduced-motion: reduce){ .screen { animation: none; } }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px);} to { opacity:1; transform:none;} }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ===========================================================
+     ГЛАВНАЯ
+     =========================================================== */
+  .hero { padding: 72px 0 40px; max-width: 44rem; }
+  .hero h1 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  .hero p { font-family: var(--sans); font-size: 17px; color: var(--muted); margin: 0 0 28px; max-width: 34rem; }
+
+  .hero-search {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-card);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .hero-search:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .hero-search svg { color: var(--muted); flex: none; }
+  .hero-search input {
+    flex: 1; border: 0; background: none; min-width: 0;
+    font-family: var(--sans); font-size: 18px; color: var(--ink);
+  }
+  .hero-search input::placeholder { color: var(--muted); }
+  .hero-search input:focus { outline: none; }
+  .hero-search .go {
+    flex: none; border: 0; cursor: pointer;
+    font-family: var(--sans); font-weight: 600; font-size: 15px; color: #fff;
+    background: var(--accent); border-radius: 10px; padding: 10px 20px;
+  }
+  .hero-search .go:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+
+  .codes { padding-bottom: 8px; }
+  .const-row {
+    display: flex; align-items: center; gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 8px 0 30px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .const-row:hover { background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface)); }
+  .const-row .ttl { font-family: var(--sans); font-weight: 700; font-size: 21px; color: var(--ink); }
+  .const-row .meta { font-family: var(--sans); font-size: 13.5px; color: var(--muted); margin-top: 3px; }
+  .const-row .chev { margin-left: auto; color: var(--accent); flex: none; }
+
+  .codes-label { margin: 0 0 12px; }
+
+  .code-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .code-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    color: var(--ink);
+    transition: background .12s;
+  }
+  .code-item:hover { background: color-mix(in srgb, var(--paper) 60%, var(--surface)); }
+  .code-grid .code-item:nth-child(odd) { border-right: 1px solid var(--line); }
+  .code-item .abbr {
+    flex: none; min-width: 44px; text-align: center;
+    font-family: var(--sans); font-weight: 600; font-size: 12.5px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 6px; padding: 5px 8px;
+    letter-spacing: .02em;
+  }
+  .code-item .nm { font-family: var(--sans); font-size: 15.5px; line-height: 1.3; }
+
+  /* ===========================================================
+     ОГЛАВЛЕНИЕ (дерево)
+     =========================================================== */
+  .toc-head { padding: 40px 0 8px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .toc-head h1 { font-family: var(--sans); font-weight: 700; font-size: clamp(24px,3.5vw,32px); letter-spacing:-.01em; margin: 8px 0 8px; color: var(--ink); }
+  .toc-head .meta { font-family: var(--sans); font-size: 13.5px; color: var(--muted); margin-bottom: 18px; }
+
+  .tree { padding-bottom: 8px; max-width: 56rem; }
+  .tnode { }
+  .tbranch {
+    display: flex; align-items: flex-start; gap: 10px;
+    width: 100%; text-align: left;
+    background: none; border: 0; cursor: pointer;
+    font-family: var(--sans); color: var(--ink);
+    padding: 9px 8px; border-radius: 8px;
+    line-height: 1.4;
+    transition: background .12s;
+  }
+  .tbranch:hover { background: color-mix(in srgb, var(--paper) 55%, var(--surface)); }
+  .tbranch .tw {
+    flex: none; width: 16px; height: 22px; display: grid; place-items: center;
+    color: var(--muted);
+    transition: transform .2s ease;
+  }
+  .tnode.collapsed > .tbranch .tw { transform: rotate(-90deg); }
+  @media (prefers-reduced-motion: reduce){ .tbranch .tw { transition: none; } }
+  .tbranch .lbl { font-size: 15.5px; }
+  .tbranch.lvl0 .lbl { font-weight: 700; font-size: 17px; }
+  .tbranch.lvl1 .lbl { font-weight: 600; }
+  .tkids { margin-left: 17px; padding-left: 12px; border-left: 1px solid var(--line); overflow: hidden; }
+  .tnode.collapsed > .tkids { display: none; }
+
+  .tleaf {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 8px 8px 8px 26px;
+    border-radius: 8px; cursor: pointer; color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.4;
+    transition: background .12s, color .12s;
+  }
+  .tleaf:hover { background: var(--accent-soft); color: var(--accent); }
+  .tleaf .num { flex: none; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; padding-top: 1px; }
+
+  /* ===========================================================
+     СТРАНИЦА СТАТЬИ  (сигнатура A — маркер-планка)
+     =========================================================== */
+  .article { max-width: 44rem; margin: 0 auto; padding: 8px 0 0; }
+  .crumbs {
+    font-family: var(--sans); font-size: 13px; color: var(--muted);
+    margin: 30px 0 26px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  }
+  .crumbs a, .crumbs span.lnk { color: var(--muted); cursor: pointer; }
+  .crumbs a:hover, .crumbs span.lnk:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .crumbs .sep { opacity: .5; }
+  .crumbs .cur { color: var(--ink); }
+
+  .art-head { display: flex; gap: 16px; margin-bottom: 30px; }
+  .art-head .bar { flex: none; width: 5px; border-radius: 3px; background: var(--accent); align-self: stretch; }
+  .art-head .num { font-family: var(--sans); font-weight: 700; font-size: 31px; letter-spacing: -.01em; line-height: 1.1; color: var(--ink); }
+  .art-head .ttl { font-family: var(--serif); font-weight: 600; font-size: 25px; line-height: 1.25; margin: 6px 0 0; color: var(--ink); }
+  .art-head .num.alone { align-self: center; }
+
+  .art-nav {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin: 48px 0 8px; padding-top: 26px; border-top: 1px solid var(--line);
+  }
+  .art-nav a {
+    display: block; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); color: var(--ink); cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .art-nav a:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface)); text-decoration: none; }
+  .art-nav a.next { text-align: right; }
+  .art-nav .dir { font-family: var(--sans); font-size: 12.5px; color: var(--accent); display: block; margin-bottom: 4px; }
+  .art-nav .lbl { font-family: var(--sans); font-size: 15px; font-weight: 600; }
+  .art-nav .sub { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .art-nav a.empty { visibility: hidden; }
+
+  /* ===========================================================
+     РЕЗУЛЬТАТЫ ПОИСКА
+     =========================================================== */
+  .search-wrap { max-width: 50rem; padding: 36px 0 0; }
+  .search-head { margin-bottom: 6px; }
+  .search-head h1 { font-family: var(--sans); font-weight: 700; font-size: 24px; letter-spacing:-.01em; margin: 0 0 4px; color: var(--ink); }
+  .search-head h1 .q { color: var(--accent); }
+  .search-head .count { font-family: var(--sans); font-size: 13.5px; color: var(--muted); }
+  .results { margin-top: 22px; }
+  .result {
+    display: block; padding: 20px 4px; border-bottom: 1px solid var(--line);
+    cursor: pointer; color: inherit;
+  }
+  .result:hover .r-title { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .result .r-title { font-family: var(--sans); font-weight: 600; font-size: 17px; color: var(--ink); }
+  .result .r-title .r-code { color: var(--muted); font-weight: 500; }
+  .result .r-snip { font-family: var(--serif); font-size: 16px; line-height: 1.6; color: var(--muted); margin-top: 8px; max-width: 42rem; }
+  .result mark, .r-snip mark { background: var(--accent-soft); color: var(--accent); padding: 0 .12em; border-radius: 3px; }
+
+  .state { padding: 48px 0; max-width: 34rem; }
+  .state .big { font-family: var(--serif); font-size: 22px; color: var(--ink); margin: 0 0 8px; }
+  .state p { font-family: var(--sans); font-size: 15px; color: var(--muted); margin: 0; line-height: 1.55; }
+
+  /* placeholder для кодексов без оглавления в демо */
+  .placeholder { padding: 48px 0; max-width: 38rem; }
+  .placeholder .big { font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+  .placeholder p { font-family: var(--sans); color: var(--muted); font-size: 15px; line-height: 1.6; }
+  .placeholder a { font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .code-grid { grid-template-columns: 1fr; }
+    .code-grid .code-item:nth-child(odd) { border-right: 0; }
+    .hero { padding: 44px 0 28px; }
+    .art-nav { grid-template-columns: 1fr; }
+    .art-nav a.next { text-align: left; }
+    .art-nav a.empty { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ШАПКА -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="brand" id="brand" aria-label="На главную">
+      <span class="brand-mark" aria-hidden="true"></span>
+      ЗАКОН
+      <span class="brand-tag">заглушка</span>
+    </button>
+    <form class="searchbox" id="hdr-search" role="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" name="q" placeholder="Найти статью или слово из закона" aria-label="Поиск по статьям и кодексам" autocomplete="off">
+      <button class="go" type="submit">Найти</button>
+    </form>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<footer class="foot">
+  <span class="foot-note">Все кодексы РФ и Конституция — бесплатно, в действующей редакции.</span>
+  <span class="foot-note">Это учебный прототип. Тексты приведены как образец вёрстки.</span>
+</footer>
+
+<div id="tweaks-root"></div>
+
+<script src="kodeksy-data.js"></script>
+<script>
+(function(){
+  const { CODES, TREE_UK, ARTICLES, RESULTS } = window.KODEKSY;
+  const view = document.getElementById('view');
+  const esc = (s)=> String(s).replace(/[&<>]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
+
+  /* —— рендер текста закона (висячие отступы, вложенность) —— */
+  function nodeHTML(n){
+    if(n.kind==='abz') return `<p>${esc(n.text)}</p>`;
+    const cls = ['node', n.kind==='part'?'part':'', n.kind==='sub'?'sub':'', n.repealed?'repealed':''].filter(Boolean).join(' ');
+    let tx = '';
+    if(n.text || n.repealed){
+      tx += `<p>${esc(n.text||'')}${n.repealed?`<span class="repealed-tag">${esc(n.tag||'утратила силу')}</span>`:''}</p>`;
+    }
+    if(n.children && n.children.length) tx += `<div class="children">${n.children.map(nodeHTML).join('')}</div>`;
+    if(n.tail) tx += `<p class="tail">${esc(n.tail)}</p>`;
+    return `<div class="${cls}"><span class="mk">${esc(n.mk||'')}</span><div class="tx">${tx}</div></div>`;
+  }
+  const lawHTML = (blocks)=> blocks.map(nodeHTML).join('');
+
+  /* —— подсветка совпадений —— */
+  function highlight(text, q){
+    if(!q) return esc(text);
+    const stem = q.trim().toLowerCase().slice(0, Math.max(4, q.trim().length-2));
+    if(stem.length < 3) return esc(text);
+    const out = []; let i=0; const low = text.toLowerCase();
+    while(i < text.length){
+      const idx = low.indexOf(stem, i);
+      if(idx === -1){ out.push(esc(text.slice(i))); break; }
+      out.push(esc(text.slice(i, idx)));
+      out.push('<mark>'+esc(text.slice(idx, idx+stem.length))+'</mark>');
+      i = idx + stem.length;
+    }
+    return out.join('');
+  }
+
+  /* ============ ЭКРАНЫ ============ */
+
+  function screenHome(){
+    const grid = CODES.map(c=>`
+      <a class="code-item" href="#/code/${c.id}">
+        <span class="abbr">${esc(c.abbr)}</span>
+        <span class="nm">${esc(c.name)}</span>
+      </a>`).join('');
+    return `<div class="screen shell codes">
+      <section class="hero">
+        <h1>Все кодексы РФ и Конституция</h1>
+        <p>Бесплатно, в действующей редакции. Найдите статью по номеру или по слову из закона.</p>
+        <form class="hero-search" id="hero-search" role="search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" name="q" placeholder="Например: статья 105 УК или «наследство»" aria-label="Поиск по статьям и кодексам" autocomplete="off">
+          <button class="go" type="submit">Найти</button>
+        </form>
+      </section>
+
+      <a class="const-row" href="#/article/const-2">
+        <div>
+          <div class="ttl">Конституция Российской Федерации</div>
+          <div class="meta">Основной закон · действующая редакция</div>
+        </div>
+        <svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </a>
+
+      <p class="eyebrow codes-label">Кодексы</p>
+      <div class="code-grid">${grid}</div>
+    </div>`;
+  }
+
+  function screenCode(id){
+    const code = CODES.find(c=>c.id===id);
+    const name = code ? code.name : 'Кодекс';
+    if(id !== 'uk'){
+      return `<div class="screen shell">
+        <div class="toc-head">
+          <p class="eyebrow">Оглавление</p>
+          <h1>${esc(name)} РФ</h1>
+          <div class="meta">действующая редакция · обновлено 01.06.2026</div>
+        </div>
+        <div class="placeholder">
+          <div class="big">Оглавление готовится</div>
+          <p>В этом прототипе полностью собрано дерево Уголовного кодекса — на нём видно, как раскрывается вложенная структура любой глубины. <a href="#/code/uk">Открыть Уголовный кодекс →</a></p>
+        </div>
+      </div>`;
+    }
+    return `<div class="screen shell">
+      <div class="toc-head">
+        <p class="eyebrow">Оглавление</p>
+        <h1>Уголовный кодекс РФ</h1>
+        <div class="meta">действующая редакция · обновлено 01.06.2026</div>
+      </div>
+      <div class="tree" id="tree">${treeHTML(TREE_UK, 0)}</div>
+    </div>`;
+  }
+
+  function treeHTML(nodes, depth){
+    return nodes.map(n=>{
+      if(n.art){
+        const m = /(\d+(?:\.\d+)?)/.exec(n.label.replace('Статья',''));
+        const num = m ? m[1] : '';
+        const rest = n.label.replace(/^Статья\s*\S+\.\s*/, '');
+        return `<a class="tleaf" href="#/article/${n.art}"><span class="num">ст. ${esc(num)}</span><span>${esc(rest)}</span></a>`;
+      }
+      const collapsed = n.open ? '' : 'collapsed';
+      return `<div class="tnode ${collapsed}">
+        <button class="tbranch lvl${depth}" type="button">
+          <span class="tw"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          <span class="lbl">${esc(n.label)}</span>
+        </button>
+        <div class="tkids">${treeHTML(n.children, depth+1)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function screenArticle(id){
+    const a = ARTICLES[id];
+    if(!a){
+      return `<div class="screen shell"><div class="state">
+        <p class="big">Статья пока не в прототипе</p>
+        <p>В этом демо собраны статьи-образцы разной сложности. <a href="#/code/uk">Вернуться к оглавлению УК →</a></p>
+      </div></div>`;
+    }
+    const crumbs = a.crumb.map((c,i)=>{
+      const last = i===a.crumb.length-1;
+      if(last) return `<span class="cur">${esc(c)}</span>`;
+      const href = i===0 ? `#/code/${a.codeId}` : null;
+      const inner = href ? `<a href="${href}">${esc(c)}</a>` : `<span class="lnk">${esc(c)}</span>`;
+      return `${inner}<span class="sep">›</span>`;
+    }).join('');
+
+    const titleHTML = a.title
+      ? `<div><div class="num">Статья ${esc(a.num)}</div><h1 class="ttl">${esc(a.title)}</h1></div>`
+      : `<div class="num alone">Статья ${esc(a.num)}</div>`;
+
+    const navItem = (item, dir)=>{
+      if(!item) return `<a class="${dir} empty" aria-hidden="true"></a>`;
+      const arrow = dir==='prev' ? '← ' : '';
+      const arrow2 = dir==='next' ? ' →' : '';
+      const sub = item.title ? `<div class="sub">${esc(item.title)}</div>` : '';
+      return `<a class="${dir}" href="${item.href}">
+        <span class="dir">${dir==='prev'?'Предыдущая':'Следующая'}</span>
+        <span class="lbl">${arrow}Статья ${esc(item.num)}${arrow2}</span>${sub}</a>`;
+    };
+
+    return `<div class="screen shell"><article class="article">
+      <nav class="crumbs">${crumbs}</nav>
+      <header class="art-head"><span class="bar"></span>${titleHTML}</header>
+      <div class="law">${lawHTML(a.blocks)}</div>
+      <nav class="art-nav">${navItem(a.prev,'prev')}${navItem(a.next,'next')}</nav>
+    </article></div>`;
+  }
+
+  function runSearch(q){
+    const query = q.trim();
+    const low = query.toLowerCase();
+    // совпадения по корню запроса в заголовке/номере/фрагменте
+    let hits = RESULTS.filter(r =>
+      r.title.toLowerCase().includes(low) ||
+      r.snippet.toLowerCase().includes(low) ||
+      low.includes('наслед'));
+    if(hits.length===0){
+      hits = Object.keys(ARTICLES).map(k=>{
+        const a = ARTICLES[k];
+        const text = (a.title+' '+a.blocks.map(b=>b.text||(b.children||[]).map(c=>c.text).join(' ')).join(' ')).toLowerCase();
+        return text.includes(low) ? { art:k, code:a.code, num:a.num, title:a.title, snippet:(a.blocks[0].text||'') } : null;
+      }).filter(Boolean);
+    }
+    return hits;
+  }
+
+  function screenSearch(q){
+    if(!q){
+      return `<div class="screen shell"><div class="search-wrap"><div class="state">
+        <p class="big">Введите статью или слово из закона</p>
+        <p>Например: «статья 105 УК», «1142 ГК» или просто «наследство». По номеру статьи сразу откроем нужный текст.</p>
+      </div></div></div>`;
+    }
+    const hits = runSearch(q);
+    if(hits.length===0){
+      return `<div class="screen shell"><div class="search-wrap">
+        <div class="search-head"><h1>По запросу «<span class="q">${esc(q)}</span>»</h1></div>
+        <div class="state">
+          <p class="big">Ничего не нашлось</p>
+          <p>Проверьте номер статьи или попробуйте другое слово. Например: «наследство», «убийство», «кража».</p>
+        </div>
+      </div></div>`;
+    }
+    const rows = hits.map(r=>`
+      <a class="result" href="#/article/${r.art}">
+        <div class="r-title">Статья ${esc(r.num)} <span class="r-code">${esc(r.code)}</span> — ${highlight(r.title, q)}</div>
+        <div class="r-snip">${highlight(r.snippet, q)}</div>
+      </a>`).join('');
+    const word = hits.length===1?'статья':(hits.length<5?'статьи':'статей');
+    return `<div class="screen shell"><div class="search-wrap">
+      <div class="search-head">
+        <h1>Найдено по запросу «<span class="q">${esc(q)}</span>»</h1>
+        <div class="count">${hits.length} ${word}</div>
+      </div>
+      <div class="results">${rows}</div>
+    </div></div>`;
+  }
+
+  /* ============ ПОИСК: распознавание реквизита ============ */
+  const ABBR2ID = { 'ук':'uk','гк':'gk','ск':'sk','тк':'tk','жк':'zhk','зк':'zk','нк':'nk','коап':'koap','гпк':'gpk','упк':'upk','апк':'apk','уик':'uik' };
+  function tryRequisite(raw){
+    const m = /(?:ст\.?\s*|статья\s+)?(\d+(?:\.\d+)?)\s*(ук|гк|ск|тк|жк|зк|нк|коап|гпк|упк|апк|уик)\b/i.exec(raw);
+    if(!m) return null;
+    const id = ABBR2ID[m[2].toLowerCase()];
+    return id ? `${id}-${m[1]}` : null;
+  }
+  function submitSearch(raw){
+    const q = (raw||'').trim();
+    if(!q) { location.hash = '#/search'; return; }
+    const reqId = tryRequisite(q);
+    if(reqId && ARTICLES[reqId]){ location.hash = '#/article/'+reqId; return; }
+    location.hash = '#/search/' + encodeURIComponent(q);
+  }
+
+  /* ============ РОУТЕР ============ */
+  function render(){
+    const raw = location.hash.replace(/^#\/?/, '');
+    const parts = raw.split('/').filter(Boolean);
+    let html, q = '';
+    if(parts.length===0){ html = screenHome(); }
+    else if(parts[0]==='code'){ html = screenCode(parts[1]); }
+    else if(parts[0]==='article'){ html = screenArticle(parts.slice(1).join('/')); }
+    else if(parts[0]==='search'){ q = parts[1] ? decodeURIComponent(parts[1]) : ''; html = screenSearch(q); }
+    else { html = screenHome(); }
+    view.innerHTML = html;
+    document.getElementById('view').scrollTop = 0;
+    window.scrollTo(0, 0);
+
+    // обновить значение в шапке
+    const hdrInput = document.querySelector('#hdr-search input');
+    if(hdrInput) hdrInput.value = parts[0]==='search' ? q : '';
+
+    // дерево: клики раскрытия
+    const tree = document.getElementById('tree');
+    if(tree){
+      tree.querySelectorAll('.tbranch').forEach(btn=>{
+        btn.addEventListener('click', ()=> btn.closest('.tnode').classList.toggle('collapsed'));
+      });
+    }
+    // поиск на главной
+    const hs = document.getElementById('hero-search');
+    if(hs){
+      hs.addEventListener('submit', e=>{ e.preventDefault(); submitSearch(hs.querySelector('input').value); });
+    }
+  }
+
+  document.getElementById('hdr-search').addEventListener('submit', function(e){
+    e.preventDefault(); submitSearch(this.querySelector('input').value);
+  });
+  document.getElementById('brand').addEventListener('click', ()=> location.hash = '#/');
+
+  window.addEventListener('hashchange', render);
+  if(!location.hash) location.hash = '#/';
+  render();
+})();
+</script>
+
+<!-- TWEAKS -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" data-presets="react">
+(function(){
+  const TWEAK_DEFAULTS = {
+    "readSize": 19,
+    "readLh": 1.7,
+    "theme": "Светлая"
+  };
+  function Panel(){
+    const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+    React.useEffect(()=>{
+      const r = document.documentElement;
+      r.style.setProperty('--read-size', t.readSize + 'px');
+      r.style.setProperty('--read-lh', String(t.readLh));
+      r.setAttribute('data-theme', t.theme === 'Контрастная' ? 'contrast' : 'light');
+    }, [t.readSize, t.readLh, t.theme]);
+    return (
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Чтение" />
+        <TweakSlider label="Размер текста" value={t.readSize} min={16} max={24} step={1} unit="px"
+                     onChange={v=>setTweak('readSize', v)} />
+        <TweakSlider label="Межстрочный" value={t.readLh} min={1.5} max={2} step={0.05}
+                     onChange={v=>setTweak('readLh', v)} />
+        <TweakSection label="Тема" />
+        <TweakRadio label="Фон" value={t.theme} options={['Светлая','Контрастная']}
+                    onChange={v=>setTweak('theme', v)} />
+      </TweaksPanel>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<Panel/>);
+})();
+</script>
+
+</body>
+</html>

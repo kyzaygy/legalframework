@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kodeksy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-kodeksy}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kodeksy} -d ${POSTGRES_DB:-kodeksy}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kodeksy}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kodeksy}?schema=public
+      PRAVO_CODEX_URL: ${PRAVO_CODEX_URL:-http://pravo.gov.ru/codex/}
+      PRAVO_CONSTITUTION_URL: ${PRAVO_CONSTITUTION_URL:-http://pravo.gov.ru/constitution/}
+      PRAVO_API_BASE: ${PRAVO_API_BASE:-http://actual.pravo.gov.ru:8000/api/ebpi/}
+      PRAVO_BPA: ${PRAVO_BPA:-ebpi}
+      SITE_URL: ${SITE_URL:-https://legalframework.ru}
+    volumes:
+      - ./loader/.cache/raw:/app/loader/.cache/raw
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

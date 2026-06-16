@@ -1,0 +1,8 @@
+legalframework.ru {
+	reverse_proxy app:3000
+	encode zstd gzip
+}
+
+www.legalframework.ru {
+	redir https://legalframework.ru{uri} permanent
+}

@@ -1,0 +1,71 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Code {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  title       String
+  shortName   String
+  editionDate DateTime?
+  sourceUrl   String?
+  order       Int
+  units       StructuralUnit[]
+  articles    Article[]
+}
+
+model StructuralUnit {
+  id       String           @id @default(cuid())
+  code     Code             @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  codeId   String
+  parent   StructuralUnit?  @relation("UnitTree", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String?
+  children StructuralUnit[] @relation("UnitTree")
+  type     UnitType
+  number   String?
+  title    String
+  order    Int
+  articles Article[]
+
+  @@index([codeId])
+  @@index([parentId])
+}
+
+model Article {
+  id          String          @id @default(cuid())
+  code        Code            @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  codeId      String
+  unit        StructuralUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  unitId      String?
+  number      String
+  slug        String
+  title       String?
+  bodyHtml    String
+  bodyText    String
+  status      ArticleStatus   @default(ACTIVE)
+  editionDate DateTime?
+  order       Int
+
+  @@unique([codeId, slug])
+  @@index([codeId])
+  @@index([unitId])
+}
+
+enum UnitType {
+  PART
+  SECTION
+  CHAPTER
+  PARAGRAPH
+}
+
+enum ArticleStatus {
+  ACTIVE
+  REPEALED
+  FUTURE
+}
