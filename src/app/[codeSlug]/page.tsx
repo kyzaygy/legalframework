@@ -2,14 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CodeTree } from "@/components/CodeTree";
 import { formatDate } from "@/lib/format";
-import { getCodeBySlug, getCodeTree, getCodes } from "@/lib/queries";
+import { getCodeBySlug, getCodeTree } from "@/lib/queries";
 
-export const revalidate = 3600;
-
-export async function generateStaticParams() {
-  const codes = await getCodes();
-  return codes.map((code) => ({ codeSlug: code.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

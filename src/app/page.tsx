@@ -3,7 +3,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { ChevronRight } from "@/components/icons";
 import { getCodes } from "@/lib/queries";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 function abbrOf(shortName: string): string {
   return shortName.replace(/\s*РФ$/u, "").trim();

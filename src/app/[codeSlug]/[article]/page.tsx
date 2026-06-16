@@ -5,7 +5,7 @@ import { LawBody } from "@/components/LawBody";
 import { formatDate } from "@/lib/format";
 import { getArticle } from "@/lib/queries";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 const TYPE_LABEL: Record<string, string> = {
   PART: "Часть",
