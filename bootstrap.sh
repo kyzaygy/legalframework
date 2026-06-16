@@ -22,7 +22,7 @@ if [ ! -f .env ]; then
   command -v openssl >/dev/null 2>&1 || { apt-get update && apt-get install -y openssl; }
   cat > .env <<EOF
 POSTGRES_USER=kodeksy
-POSTGRES_PASSWORD=$(openssl rand -base64 24)
+POSTGRES_PASSWORD=$(openssl rand -hex 24)
 POSTGRES_DB=kodeksy
 SITE_URL=https://legalframework.ru
 EOF

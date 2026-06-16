@@ -82,13 +82,17 @@ docker compose version
 cd /opt/legalframework
 cat > .env <<EOF
 POSTGRES_USER=kodeksy
-POSTGRES_PASSWORD=$(openssl rand -base64 24)
+POSTGRES_PASSWORD=$(openssl rand -hex 24)
 POSTGRES_DB=kodeksy
 SITE_URL=https://legalframework.ru
 EOF
 chmod 600 .env
 cat .env
 ```
+
+Пароль генерируется в hex (только `0-9a-f`), чтобы быть безопасным внутри
+строки подключения `DATABASE_URL`. Не используйте `base64` — символы `/ + =`
+ломают URL. Если задаёте пароль вручную — только буквы и цифры.
 
 Переменные в `.env`:
 
