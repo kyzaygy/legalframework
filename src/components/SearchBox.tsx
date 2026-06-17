@@ -4,13 +4,10 @@ import { useRouter } from "next/navigation";
 import { SearchIcon } from "./icons";
 
 interface SearchBoxProps {
-  variant: "bar" | "hero";
   placeholder: string;
-  defaultValue?: string;
-  autoFocus?: boolean;
 }
 
-export function SearchBox({ variant, placeholder, defaultValue, autoFocus }: SearchBoxProps) {
+export function SearchBox({ placeholder }: SearchBoxProps) {
   const router = useRouter();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -21,16 +18,14 @@ export function SearchBox({ variant, placeholder, defaultValue, autoFocus }: Sea
   }
 
   return (
-    <form className={variant === "hero" ? "hero-search" : "searchbox"} role="search" onSubmit={handleSubmit}>
-      <SearchIcon size={variant === "hero" ? 20 : 17} />
+    <form className="searchbox" role="search" onSubmit={handleSubmit}>
+      <SearchIcon size={17} />
       <input
         type="search"
         name="q"
         placeholder={placeholder}
         aria-label="Поиск по статьям и кодексам"
         autoComplete="off"
-        defaultValue={defaultValue}
-        autoFocus={autoFocus}
       />
       <button className="go" type="submit">
         Найти

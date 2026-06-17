@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SearchBox } from "@/components/SearchBox";
 import { ChevronRight } from "@/components/icons";
 import { getCodes } from "@/lib/queries";
 
@@ -21,7 +20,6 @@ export default async function HomePage() {
         <p>
           Бесплатно, в действующей редакции. Найдите статью по номеру или по слову из закона.
         </p>
-        <SearchBox variant="hero" placeholder="Например: статья 105 УК или «наследство»" />
       </section>
 
       {constitution && (

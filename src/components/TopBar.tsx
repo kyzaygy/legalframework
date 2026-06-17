@@ -7,9 +7,9 @@ export function TopBar() {
       <div className="topbar-inner">
         <Link className="brand" href="/" aria-label="На главную">
           <span className="brand-mark" aria-hidden="true" />
-          ЗАКОН
+          Legal Framework
         </Link>
-        <SearchBox variant="bar" placeholder="Найти статью или слово из закона" />
+        <SearchBox placeholder="Найти статью или слово из закона" />
       </div>
     </header>
   );
