@@ -5,7 +5,4 @@ node_modules
 .env.local
 *.log
 loader/.cache
-Кодексы РФ - прототип.html
-kodeksy.css
-kodeksy-data.js
-TZ_kodeksy_rf_mvp.md
+design
