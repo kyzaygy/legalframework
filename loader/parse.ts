@@ -79,6 +79,7 @@ export function parseCodexList(html: string, sourceUrl: string): CodexSpec[] {
       shortName: entry?.shortName ?? name,
       title: name.replace(/\s*\([^)]*\)\s*$/, "").trim(),
       sourceUrl,
+      kind: "CODE",
       parts: [],
     };
     specs.push(current);
@@ -139,8 +140,16 @@ function isArticleUnit(unit: string): boolean {
   return unit.trim().toLowerCase() === "статья";
 }
 
+function isWrapperUnit(unit: string): boolean {
+  return unit.trim().toLowerCase() === "вложение";
+}
+
 function isInternalCaption(caption: string): boolean {
   return caption.trimStart().startsWith("$");
+}
+
+function isRepealedBody(text: string): boolean {
+  return /^\(?\s*Стать[яи]\s+(?:утратил[аио]?\s+силу|исключен[аоы]?)/iu.test(text.trimStart());
 }
 
 export function buildEbpiCode(rawUnits: RawUnit[], redtextHtml: string): {
@@ -156,6 +165,7 @@ export function buildEbpiCode(rawUnits: RawUnit[], redtextHtml: string): {
 
   for (const raw of rawUnits) {
     if (isInternalCaption(raw.caption)) continue;
+    if (isWrapperUnit(raw.unit)) continue;
 
     while (stack.length > 0 && stack[stack.length - 1]!.lvl >= raw.lvl) stack.pop();
     const parentKey = stack.length > 0 ? stack[stack.length - 1]!.key : null;
@@ -164,13 +174,15 @@ export function buildEbpiCode(rawUnits: RawUnit[], redtextHtml: string): {
       const { number, title, status } = parseArticleCaption(raw.caption);
       if (!number) continue;
       const body = extractArticleBody($, raw.np, raw.npe);
+      const finalStatus: StatusName =
+        status === "REPEALED" || isRepealedBody(body.bodyText) ? "REPEALED" : status;
       articles.push({
         unitKey: parentKey,
         number,
         title,
         bodyHtml: body.bodyHtml,
-        bodyText: body.bodyText || (status === "REPEALED" ? "Утратила силу." : ""),
-        status,
+        bodyText: body.bodyText || (finalStatus === "REPEALED" ? "Утратила силу." : ""),
+        status: finalStatus,
         order: articleOrder++,
       });
       continue;

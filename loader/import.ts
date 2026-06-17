@@ -21,6 +21,7 @@ export async function importCode(
       slug: spec.slug,
       title: spec.title,
       shortName: spec.shortName,
+      kind: spec.kind,
       editionDate: parsed.editionDate,
       sourceUrl: spec.sourceUrl,
       order,
@@ -28,6 +29,7 @@ export async function importCode(
     update: {
       title: spec.title,
       shortName: spec.shortName,
+      kind: spec.kind,
       editionDate: parsed.editionDate,
       sourceUrl: spec.sourceUrl,
       order,

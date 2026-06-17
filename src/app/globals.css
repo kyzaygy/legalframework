@@ -351,6 +351,10 @@ main {
   margin: 0 0 12px;
 }
 
+.laws-label {
+  margin-top: 32px;
+}
+
 .code-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

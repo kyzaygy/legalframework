@@ -1,7 +1,10 @@
 import { config } from "./config";
 import { fetchJson, fetchText } from "./http";
+import { FEDERAL_LAWS } from "./laws";
 import { buildEbpiCode, parseCodexList, parseConstitution } from "./parse";
 import type {
+  CardResponse,
+  CodexPart,
   CodexSpec,
   ContentResponse,
   ParsedArticle,
@@ -11,16 +14,25 @@ import type {
   RedTextResponse,
 } from "./types";
 
+type EbpiLocator = { hash: string } | { docid: number };
+
 const CONSTITUTION_SPEC: CodexSpec = {
   slug: "konstituciya",
   shortName: "Конституция РФ",
   title: "Конституция Российской Федерации",
   sourceUrl: "http://pravo.gov.ru/proxy/ips/?doc_itself=&nd=102027595",
+  kind: "CONSTITUTION",
   parts: [],
 };
 
 function api(path: string): string {
   return config.apiBase + path;
+}
+
+function partLocator(part: CodexPart): EbpiLocator {
+  if (part.hash) return { hash: part.hash };
+  if (part.docid !== undefined) return { docid: part.docid };
+  throw new Error("Часть документа без hash и docid");
 }
 
 function parseReddate(value: string): Date | null {
@@ -34,8 +46,8 @@ export async function fetchCodexSpecs(): Promise<CodexSpec[]> {
   return parseCodexList(html, config.codexUrl);
 }
 
-async function resolveActualRedaction(hash: string): Promise<{ redid: number; editionDate: Date | null }> {
-  const t = encodeURIComponent(JSON.stringify({ hash, ttl: 1 }));
+async function resolveActualRedaction(locator: EbpiLocator): Promise<{ redid: number; editionDate: Date | null }> {
+  const t = encodeURIComponent(JSON.stringify({ ...locator, ttl: 1 }));
   const data = await fetchJson<RedactionsResponse>(api(`redactions/?bpa=${config.bpa}&t=${t}`));
   if (data.error) throw new Error(`redactions: ${data.error}`);
   const redactions = data.redactions ?? [];
@@ -47,16 +59,16 @@ async function resolveActualRedaction(hash: string): Promise<{ redid: number; ed
     withContent[0] ??
     redactions.find((red) => red.actual) ??
     redactions[0];
-  if (!chosen) throw new Error(`Нет доступных редакций для hash ${hash}`);
+  if (!chosen) throw new Error(`Нет доступных редакций для ${JSON.stringify(locator)}`);
   return { redid: chosen.redid, editionDate: parseReddate(chosen.reddate) };
 }
 
-async function fetchEbpiPart(hash: string): Promise<{
+async function fetchEbpiPart(locator: EbpiLocator): Promise<{
   units: ParsedUnit[];
   articles: ParsedArticle[];
   editionDate: Date | null;
 }> {
-  const { redid, editionDate } = await resolveActualRedaction(hash);
+  const { redid, editionDate } = await resolveActualRedaction(locator);
   const content = await fetchJson<ContentResponse>(api(`getcontent/?bpa=${config.bpa}&rdk=${redid}`));
   if (content.error || !content.data) throw new Error(`getcontent: ${content.error ?? "пустой ответ"}`);
   const redtext = await fetchJson<RedTextResponse>(api(`redtext?bpa=${config.bpa}&t=${redid}&ttl=0`));
@@ -84,7 +96,7 @@ export async function fetchCodex(spec: CodexSpec): Promise<ParsedCode> {
 
   for (let index = 0; index < spec.parts.length; index += 1) {
     const part = spec.parts[index]!;
-    const result = await fetchEbpiPart(part.hash);
+    const result = await fetchEbpiPart(partLocator(part));
     if (result.editionDate) editionDates.push(result.editionDate);
 
     const prefix = `p${index}:`;
@@ -132,4 +144,40 @@ export function constitutionSpec(): CodexSpec {
 export async function fetchConstitution(): Promise<ParsedCode> {
   const html = await fetchText(CONSTITUTION_SPEC.sourceUrl);
   return parseConstitution(html);
+}
+
+async function fetchCard(docid: number): Promise<CardResponse> {
+  const t = encodeURIComponent(JSON.stringify({ docid, ttl: 1 }));
+  const data = await fetchJson<CardResponse>(api(`card/?bpa=${config.bpa}&t=${t}`));
+  if (data.error) throw new Error(`card: ${data.error}`);
+  return data;
+}
+
+function lawNumber(card: CardResponse): string {
+  const adopted = card.adoptions?.[0]?.onumber?.trim();
+  if (adopted) return adopted;
+  const fromPassing = /№\s*(\S+)\s*$/u.exec(card.docpassing)?.[1];
+  return fromPassing ?? card.docname;
+}
+
+function lawTitle(card: CardResponse): string {
+  const actType = card.docpassing.split(/\s+от\s+/u)[0]?.trim();
+  if (!actType) return card.docname;
+  return `${actType} «${card.docname}»`;
+}
+
+export async function fetchLawSpecs(): Promise<CodexSpec[]> {
+  const specs: CodexSpec[] = [];
+  for (const law of FEDERAL_LAWS) {
+    const card = await fetchCard(law.docid);
+    specs.push({
+      slug: law.slug,
+      shortName: lawNumber(card),
+      title: lawTitle(card),
+      sourceUrl: `http://actual.pravo.gov.ru/content/content.html#hash=${card.dochash}&ttl=1`,
+      kind: "LAW",
+      parts: [{ caption: card.docname, docid: law.docid }],
+    });
+  }
+  return specs;
 }

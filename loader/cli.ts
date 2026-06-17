@@ -7,6 +7,7 @@ import {
   fetchCodex,
   fetchCodexSpecs,
   fetchConstitution,
+  fetchLawSpecs,
 } from "./source";
 import type { CodexSpec } from "./types";
 
@@ -41,6 +42,28 @@ async function runReconnaissance(slugArg: string | undefined): Promise<void> {
   await importOneCodex(target, 0);
 }
 
+async function nextOrder(): Promise<number> {
+  const max = await prisma.code.aggregate({ _max: { order: true } });
+  return (max._max.order ?? -1) + 1;
+}
+
+async function runLawsImport(slugArg?: string): Promise<void> {
+  const specs = await fetchLawSpecs();
+  const selected = slugArg ? specs.filter((spec) => spec.slug === slugArg) : specs;
+  if (selected.length === 0) throw new Error(`Закон не найден: ${slugArg ?? "(все)"}`);
+  console.log(`Федеральных законов к импорту: ${selected.length}`);
+  let order = await nextOrder();
+  for (const spec of selected) {
+    try {
+      await importOneCodex(spec, order++);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      discrepancies.push(`Закон ${spec.slug} не импортирован: ${message}`);
+      console.error(`    ОШИБКА: ${message}`);
+    }
+  }
+}
+
 async function runFullImport(): Promise<void> {
   const specs = await fetchCodexSpecs();
   console.log(`Найдено кодексов в перечне: ${specs.length}`);
@@ -55,6 +78,7 @@ async function runFullImport(): Promise<void> {
       console.error(`    ОШИБКА: ${message}`);
     }
   }
+  await runLawsImport();
 }
 
 async function main(): Promise<void> {
@@ -65,8 +89,10 @@ async function main(): Promise<void> {
     await runReconnaissance(arg);
   } else if (command === "constitution") {
     await importConstitution(0);
+  } else if (command === "laws") {
+    await runLawsImport(arg);
   } else {
-    console.error('Использование: tsx loader/cli.ts <codex [slug] | constitution | all>');
+    console.error('Использование: tsx loader/cli.ts <codex [slug] | constitution | laws [slug] | all>');
     process.exitCode = 1;
     return;
   }

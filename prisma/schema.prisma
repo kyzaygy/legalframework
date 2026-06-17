@@ -13,6 +13,7 @@ model Code {
   slug        String           @unique
   title       String
   shortName   String
+  kind        CodeKind         @default(CODE)
   editionDate DateTime?
   sourceUrl   String?
   order       Int
@@ -55,6 +56,12 @@ model Article {
   @@unique([codeId, slug])
   @@index([codeId])
   @@index([unitId])
+}
+
+enum CodeKind {
+  CONSTITUTION
+  CODE
+  LAW
 }
 
 enum UnitType {

@@ -1,6 +1,9 @@
+export type CodeKindName = "CONSTITUTION" | "CODE" | "LAW";
+
 export interface CodexPart {
   caption: string;
-  hash: string;
+  hash?: string;
+  docid?: number;
 }
 
 export interface CodexSpec {
@@ -8,7 +11,17 @@ export interface CodexSpec {
   shortName: string;
   title: string;
   sourceUrl: string;
+  kind: CodeKindName;
   parts: CodexPart[];
+}
+
+export interface CardResponse {
+  docid: number;
+  docname: string;
+  docpassing: string;
+  dochash: string;
+  adoptions: { onumber: string; odate: string; type: string }[] | null;
+  error?: string;
 }
 
 export interface Redaction {

@@ -10,8 +10,9 @@ function abbrOf(shortName: string): string {
 
 export default async function HomePage() {
   const codes = await getCodes();
-  const constitution = codes.find((code) => code.slug === "konstituciya");
-  const codexes = codes.filter((code) => code.slug !== "konstituciya");
+  const constitution = codes.find((code) => code.kind === "CONSTITUTION");
+  const codexes = codes.filter((code) => code.kind === "CODE");
+  const laws = codes.filter((code) => code.kind === "LAW");
 
   return (
     <div className="shell codes">
@@ -41,6 +42,20 @@ export default async function HomePage() {
           </Link>
         ))}
       </div>
+
+      {laws.length > 0 && (
+        <>
+          <p className="eyebrow codes-label laws-label">Федеральные законы</p>
+          <div className="code-grid">
+            {laws.map((code) => (
+              <Link key={code.slug} className="code-item" href={`/${code.slug}`}>
+                <span className="abbr">{code.shortName}</span>
+                <span className="nm">{code.title}</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
