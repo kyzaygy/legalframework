@@ -106,8 +106,16 @@ function mapUnitType(unit: string): UnitTypeName {
   return "PARAGRAPH";
 }
 
+function cleanCaption(raw: string): string {
+  return raw
+    .replace(/<sup>([^<]+)<\/sup>/giu, ".$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseUnitCaption(caption: string): { number: string | null; title: string } {
-  const text = caption.replace(/\s+/g, " ").trim();
+  const text = cleanCaption(caption);
   const match = /^[А-ЯЁа-яё§]+\s+([IVXLCDM]+|\d+(?:\.\d+)*)\.?\s*(.*)$/u.exec(text);
   if (!match) return { number: null, title: text };
   return { number: match[1] ?? null, title: (match[2] ?? "").trim() };
@@ -118,7 +126,7 @@ function parseArticleCaption(caption: string): {
   title: string | null;
   status: StatusName;
 } {
-  const text = caption.replace(/\s+/g, " ").trim();
+  const text = cleanCaption(caption);
   const match = /^Стать[яи]\s+(\d+(?:\.\d+)*(?:-\d+)?)\.?\s*(.*)$/u.exec(text);
   const number = match?.[1] ?? null;
   const rest = (match?.[2] ?? "").trim();

@@ -23,7 +23,7 @@ function Leaf({ codeSlug, article }: { codeSlug: string; article: TreeArticle })
   return (
     <Link className="tleaf" href={`/${codeSlug}/${article.slug}`}>
       <span className="num">ст. {article.number}</span>
-      <span>{article.title ?? "Без названия"}</span>
+      {article.title && <span>{article.title}</span>}
     </Link>
   );
 }
