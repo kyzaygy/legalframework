@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CodeTree } from "@/components/CodeTree";
 import { formatDate } from "@/lib/format";
 import { getCodeBySlug, getCodeTree } from "@/lib/queries";
+import { isValidCodeSlug } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export async function generateMetadata({
   params: Promise<{ codeSlug: string }>;
 }): Promise<Metadata> {
   const { codeSlug } = await params;
+  if (!isValidCodeSlug(codeSlug)) return {};
   const code = await getCodeBySlug(codeSlug);
   if (!code) return {};
   return {
@@ -23,6 +25,7 @@ export async function generateMetadata({
 
 export default async function CodePage({ params }: { params: Promise<{ codeSlug: string }> }) {
   const { codeSlug } = await params;
+  if (!isValidCodeSlug(codeSlug)) notFound();
   const code = await getCodeBySlug(codeSlug);
   if (!code) notFound();
 

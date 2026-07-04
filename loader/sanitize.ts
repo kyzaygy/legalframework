@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import type { AnyNode, Element } from "domhandler";
+import sanitizeHtml from "sanitize-html";
 
 const ALLOWED_TAGS = new Set([
   "p",
@@ -60,9 +61,18 @@ export function sanitizeFragment(rawHtml: string): SanitizedBody {
     if (normalizeWhitespace(node.text()) === "") node.remove();
   });
 
-  const bodyHtml = normalizeWhitespace($.html())
-    .replace(/>\s+</g, "><")
-    .trim();
+  // Финальный проход sanitize-html поверх cheerio-очистки: белый список тегов,
+  // никаких атрибутов. Защищает от stored XSS при подмене или компрометации
+  // источника (pravo.gov.ru), включая краевые случаи парсинга (комментарии,
+  // сломанная разметка), которые cheerio-проход мог пропустить.
+  const bodyHtml = sanitizeHtml(
+    normalizeWhitespace($.html()).replace(/>\s+</g, "><").trim(),
+    {
+      allowedTags: [...ALLOWED_TAGS],
+      allowedAttributes: {},
+      disallowedTagsMode: "discard",
+    },
+  );
 
   const paragraphs: string[] = [];
   $("p, li, td, th").each((_, element) => {
