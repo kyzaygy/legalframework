@@ -233,6 +233,17 @@ docker compose up -d
 docker compose ps                  # app должен стать healthy
 ```
 
+Обратите внимание: `statement_timeout=15s` из `DATABASE_URL` действует и на
+`prisma migrate deploy`. Текущие миграции короткие, но если будущая миграция
+(например, `CREATE INDEX` на большой таблице) упадёт по таймауту — выполните
+её разово с URL без параметра `options`:
+
+```bash
+docker compose run --rm \
+  -e DATABASE_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB?schema=public" \
+  app npx prisma migrate deploy
+```
+
 Рекомендации:
 
 - **Критичные патчи Next.js/React** (RCE, как React2Shell в декабре 2025)
