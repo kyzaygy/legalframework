@@ -60,6 +60,11 @@ async function resolveActualRedaction(locator: EbpiLocator): Promise<{ redid: nu
     redactions.find((red) => red.actual) ??
     redactions[0];
   if (!chosen) throw new Error(`Нет доступных редакций для ${JSON.stringify(locator)}`);
+  // redid приходит из внешнего API и подставляется в URL следующих запросов —
+  // принимаем только целое число, чтобы исключить инъекцию в query string.
+  if (!Number.isInteger(chosen.redid) || chosen.redid <= 0) {
+    throw new Error(`Некорректный redid из API: ${JSON.stringify(chosen.redid)}`);
+  }
   return { redid: chosen.redid, editionDate: parseReddate(chosen.reddate) };
 }
 
@@ -170,6 +175,11 @@ export async function fetchLawSpecs(): Promise<CodexSpec[]> {
   const specs: CodexSpec[] = [];
   for (const law of FEDERAL_LAWS) {
     const card = await fetchCard(law.docid);
+    // dochash приходит из внешнего API и попадает в sourceUrl — принимаем
+    // только hex-хэш ожидаемого формата.
+    if (!/^[0-9a-f]{64}$/i.test(card.dochash)) {
+      throw new Error(`Некорректный dochash из API для docid=${law.docid}`);
+    }
     specs.push({
       slug: law.slug,
       shortName: lawNumber(card),

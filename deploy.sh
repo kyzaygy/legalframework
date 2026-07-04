@@ -15,6 +15,10 @@ POSTGRES_USER="${POSTGRES_USER:-kodeksy}"
 POSTGRES_DB="${POSTGRES_DB:-kodeksy}"
 
 echo "==> 1/5 Сборка образов"
+# Приложение работает от пользователя node (uid 1000); хостовый каталог кэша
+# loader'а монтируется в контейнер и должен принадлежать этому uid.
+mkdir -p loader/.cache/raw
+chown -R 1000:1000 loader/.cache 2>/dev/null || true
 docker compose build
 
 echo "==> 2/5 Запуск базы данных"

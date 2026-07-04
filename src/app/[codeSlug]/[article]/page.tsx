@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LawBody } from "@/components/LawBody";
 import { formatDate } from "@/lib/format";
 import { getArticle } from "@/lib/queries";
+import { isValidArticleSlug, isValidCodeSlug } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ interface ArticleParams {
 
 export async function generateMetadata({ params }: ArticleParams): Promise<Metadata> {
   const { codeSlug, article } = await params;
+  if (!isValidCodeSlug(codeSlug) || !isValidArticleSlug(article)) return {};
   const data = await getArticle(codeSlug, article);
   if (!data) return {};
   const heading = data.article.title
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: ArticleParams): Promise<Metad
 
 export default async function ArticlePage({ params }: ArticleParams) {
   const { codeSlug, article } = await params;
-  if (!article.startsWith("statya-")) notFound();
+  if (!isValidCodeSlug(codeSlug) || !isValidArticleSlug(article)) notFound();
 
   const data = await getArticle(codeSlug, article);
   if (!data) notFound();

@@ -129,8 +129,29 @@ export interface SearchHit {
   snippet: string;
 }
 
+// ts_headline не экранирует HTML в тексте статьи, а сниппет рендерится через
+// dangerouslySetInnerHTML. Поэтому маркеры подсветки — управляющие символы,
+// которых не бывает в тексте; HTML экранируется целиком, затем маркеры
+// превращаются в <mark>.
+const HEADLINE_START = "\u0001";
+const HEADLINE_STOP = "\u0002";
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function toSafeSnippet(raw: string): string {
+  return escapeHtml(raw.replaceAll(HEADLINE_START + HEADLINE_STOP, ""))
+    .replaceAll(HEADLINE_START, "<mark>")
+    .replaceAll(HEADLINE_STOP, "</mark>");
+}
+
 export async function searchArticles(query: string): Promise<SearchHit[]> {
-  return prisma.$queryRaw<SearchHit[]>`
+  const hits = await prisma.$queryRaw<SearchHit[]>`
     SELECT
       c.slug AS "codeSlug",
       c."shortName" AS "codeShort",
@@ -139,7 +160,7 @@ export async function searchArticles(query: string): Promise<SearchHit[]> {
       a.slug,
       a.status::text AS status,
       ts_headline('russian', a."bodyText", q,
-        'StartSel=<mark>,StopSel=</mark>,MaxFragments=1,MaxWords=34,MinWords=16,ShortWord=2') AS snippet
+        'StartSel="' || chr(1) || '",StopSel="' || chr(2) || '",MaxFragments=1,MaxWords=34,MinWords=16,ShortWord=2') AS snippet
     FROM "Article" a
     JOIN "Code" c ON c.id = a."codeId",
       websearch_to_tsquery('russian', ${query}) q
@@ -147,4 +168,5 @@ export async function searchArticles(query: string): Promise<SearchHit[]> {
     ORDER BY ts_rank(a."searchVector", q) DESC, a."order" ASC
     LIMIT 40;
   `;
+  return hits.map((hit) => ({ ...hit, snippet: toSafeSnippet(hit.snippet) }));
 }

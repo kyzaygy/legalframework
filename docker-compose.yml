@@ -17,11 +17,17 @@ services:
   app:
     build: .
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kodeksy}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kodeksy}?schema=public
+      # options=-c statement_timeout=15000 (URL-encoded): тяжёлый запрос
+      # (например, поисковый) прерывается через 15 с и не может положить БД.
+      # Если import:all упадёт с "canceling statement due to statement timeout" —
+      # запустите импорт с переопределённым DATABASE_URL без options.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kodeksy}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-kodeksy}?schema=public&options=-c%20statement_timeout%3D15000
       PRAVO_CODEX_URL: ${PRAVO_CODEX_URL:-http://pravo.gov.ru/codex/}
       PRAVO_CONSTITUTION_URL: ${PRAVO_CONSTITUTION_URL:-http://pravo.gov.ru/constitution/}
       PRAVO_API_BASE: ${PRAVO_API_BASE:-http://actual.pravo.gov.ru:8000/api/ebpi/}
@@ -31,10 +37,18 @@ services:
       - ./loader/.cache/raw:/app/loader/.cache/raw
     expose:
       - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/robots.txt').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       - app
     ports:

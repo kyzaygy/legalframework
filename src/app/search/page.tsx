@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { parseRequisite } from "@/lib/search";
 import { prisma } from "@/lib/prisma";
 import { searchArticles, type SearchHit } from "@/lib/queries";
+import { normalizeSearchQuery } from "@/lib/validate";
 
 export const metadata: Metadata = {
   title: "Поиск",
@@ -80,7 +81,7 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const query = (q ?? "").trim();
+  const query = normalizeSearchQuery(typeof q === "string" ? q : undefined);
 
   if (!query) {
     return (

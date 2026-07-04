@@ -1,8 +1,32 @@
 legalframework.ru {
-	reverse_proxy app:3000
 	encode zstd gzip
+
+	header {
+		# HSTS: год, включая поддомены
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		# Не раскрывать сервер
+		-Server
+		defer
+	}
+
+	# TODO(CSP): Content-Security-Policy не задана. Осмысленная CSP для Next.js
+	# требует per-request nonce: nonce генерируется в middleware Next
+	# (src/middleware.ts), передаётся через заголовок запроса и подставляется
+	# Next'ом в его инлайновые скрипты. Из Caddy это не сделать: статическая
+	# политика потребовала бы script-src 'unsafe-inline' и не защищала бы от XSS.
+	# План: добавить middleware с nonce по гайду
+	# https://nextjs.org/docs/app/guides/content-security-policy,
+	# затем включить здесь Content-Security-Policy-Report-Only и после
+	# проверки отчётов перевести в enforcing.
+
+	reverse_proxy app:3000
 }
 
 www.legalframework.ru {
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	redir https://legalframework.ru{uri} permanent
 }
