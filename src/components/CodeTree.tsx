@@ -21,9 +21,12 @@ function unitLabel(unit: TreeUnit): string {
 
 function Leaf({ codeSlug, article }: { codeSlug: string; article: TreeArticle }) {
   return (
-    <Link className="tleaf" href={`/${codeSlug}/${article.slug}`}>
+    <Link
+      className={`tleaf${article.status === "REPEALED" ? " repealed" : ""}`}
+      href={`/${codeSlug}/${article.slug}`}
+    >
       <span className="num">ст. {article.number}</span>
-      {article.title && <span>{article.title}</span>}
+      {article.title && <span className="ttl">{article.title}</span>}
     </Link>
   );
 }
@@ -37,7 +40,7 @@ function Branch({
   unit: TreeUnit;
   depth: number;
 }) {
-  const [open, setOpen] = useState(depth === 0);
+  const [open, setOpen] = useState(depth <= 2);
   return (
     <div className={`tnode${open ? "" : " collapsed"}`}>
       <button className={`tbranch lvl${depth}`} type="button" onClick={() => setOpen((value) => !value)}>

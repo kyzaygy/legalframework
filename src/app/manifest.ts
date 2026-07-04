@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Все кодексы РФ и Конституция в действующей редакции.",
     start_url: "/",
     display: "standalone",
-    background_color: "#F6F7F9",
+    background_color: "#F6F1E6",
     theme_color: "#6E2433",
     icons: [
       {
