@@ -35,14 +35,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <TopBar />
         <main>{children}</main>
         <footer className="foot">
-          <span className="foot-note">
-            Источник текстов — официальный портал pravo.gov.ru, действующая редакция.
-          </span>
-          <span className="foot-note">
-            Сайт не является официальным опубликованием правовых актов. При принятии решений
-            сверяйтесь с первоисточником.
-          </span>
-          <span className="foot-copy">© 2026 Legal Framework · дизайн и оформление</span>
+          <div className="shell">
+            <span className="foot-note">
+              Источник текстов — официальный портал pravo.gov.ru, действующая редакция.
+            </span>
+            <span className="foot-note">
+              Сайт не является официальным опубликованием правовых актов. При принятии решений
+              сверяйтесь с первоисточником.
+            </span>
+            <span className="foot-copy">© 2026 Legal Framework · дизайн и оформление</span>
+          </div>
         </footer>
       </body>
     </html>

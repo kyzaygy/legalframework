@@ -16,6 +16,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: "Действующая редакция",
   REPEALED: "Утратила силу",
   FUTURE: "Будущая редакция",
 };
@@ -84,8 +85,13 @@ export default async function ArticlePage({ params }: ArticleParams) {
         </header>
 
         <div className="art-meta">
-          {STATUS_LABEL[art.status] && <span className="art-status">{STATUS_LABEL[art.status]}</span>}
-          <span>{edition ? `Действующая редакция · ${edition}` : "Консолидированный текст"}</span>
+          <span className={`badge badge--${art.status.toLowerCase()}`}>
+            {STATUS_LABEL[art.status] ?? art.status}
+          </span>
+          <span>
+            {code.shortName}
+            {edition ? ` · обновлено ${edition}` : " · консолидированный текст"}
+          </span>
         </div>
 
         <LawBody bodyHtml={art.bodyHtml} />

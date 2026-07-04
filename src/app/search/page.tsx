@@ -64,7 +64,8 @@ function Results({ query, hits }: { query: string; hits: SearchHit[] }) {
         {hits.map((hit) => (
           <Link key={`${hit.codeSlug}-${hit.slug}`} className="result" href={`/${hit.codeSlug}/${hit.slug}`}>
             <div className="r-title">
-              Статья {hit.number} <span className="r-code">{hit.codeShort}</span>
+              <span className="r-num">Статья {hit.number}</span>{" "}
+              <span className="r-code">{hit.codeShort}</span>
               {hit.title ? ` — ${hit.title}` : ""}
             </div>
             <div className="r-snip" dangerouslySetInnerHTML={{ __html: hit.snippet }} />
