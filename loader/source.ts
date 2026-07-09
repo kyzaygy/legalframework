@@ -3,6 +3,8 @@ import { fetchJson, fetchText } from "./http";
 import { FEDERAL_LAWS } from "./laws";
 import { buildEbpiCode, parseCodexList, parseConstitution } from "./parse";
 import type {
+  AttrSearchDoc,
+  AttrSearchResponse,
   CardResponse,
   CodexPart,
   CodexSpec,
@@ -169,6 +171,111 @@ function lawTitle(card: CardResponse): string {
   const actType = card.docpassing.split(/\s+от\s+/u)[0]?.trim();
   if (!actType) return card.docname;
   return `${actType} «${card.docname}»`;
+}
+
+// ——— Автообнаружение федеральных законов через attrsearch ЕБПИ ———
+
+// id вида акта «Федеральный закон» из словаря kinds (glossary?t=kinds).
+const FZ_KIND_ID = 107;
+// База «актуальных» текстов ведётся с 01.07.2022 (config.js портала).
+const ACTUAL_START_DATE = "20220701";
+const ATTRSEARCH_PAGE = 100;
+
+// Законы-поправки и технические акты: полезного консолидированного текста не
+// несут, только засоряют каталог. Отсекаются по началу наименования.
+const SKIP_LAW_NAME =
+  /^\s*(О\s+внесени|О\s+признани\s+утратив|О\s+приостановлени|О\s+продлени\s+срок)/iu;
+// Недействующие состояния (словарь docstates: утратил силу/отменён/не действует/
+// не применяется/не вступил в силу) — в справочник не берём.
+const INACTIVE_STATE = /утратил|отмен|не\s+действ|не\s+примен|не\s+вступил/iu;
+
+export interface DiscoveredLaw {
+  docid: number;
+  dochash: string;
+  number: string;
+  numberInt: number;
+  year: string;
+  title: string;
+}
+
+function attrsearchUrl(page: number, limit: number): string {
+  // Формат q восстановлен из buildSearchString (list.js портала):
+  // атрибут «вид акта» (id 4) c IDParams, и атрибут сортировки/пагинации
+  // (id 999): [лимит, ключ сортировки, дата начала базы, include_future, restrict_vid].
+  const q = [
+    { AttrId: 4, AttrMode: 1, IDParams: [{ Id: FZ_KIND_ID, Param: 0 }] },
+    { AttrId: 999, AttrMode: page, Words: [limit, "-date", ACTUAL_START_DATE, 0, 1] },
+  ];
+  return api(`attrsearch/?bpa=${config.bpa}&q=${encodeURIComponent(JSON.stringify(q))}`);
+}
+
+function toDiscoveredLaw(doc: AttrSearchDoc): DiscoveredLaw | null {
+  if (!/^[0-9a-f]{64}$/i.test(doc.dochash)) return null;
+  if (INACTIVE_STATE.test(doc.docstate)) return null;
+  if (SKIP_LAW_NAME.test(doc.docnames)) return null;
+  if (!Number.isInteger(doc.docpass0numberint) || doc.docpass0numberint <= 0) return null;
+  const year = /^(\d{4})/.exec(doc.docpass0date ?? "")?.[1];
+  if (!year) return null;
+  const title = doc.docnames?.trim();
+  if (!title) return null;
+  return {
+    docid: doc.docid,
+    dochash: doc.dochash,
+    number: doc.docpass0number,
+    numberInt: doc.docpass0numberint,
+    year,
+    title,
+  };
+}
+
+export async function discoverFederalLaws(maxLaws?: number): Promise<DiscoveredLaw[]> {
+  const first = await fetchJson<AttrSearchResponse>(attrsearchUrl(1, ATTRSEARCH_PAGE), {
+    cache: false,
+  });
+  if (first.error) throw new Error(`attrsearch: ${first.error}`);
+  const total = first.docscount ?? first.docs.length;
+  const pages = Math.max(1, Math.ceil(total / ATTRSEARCH_PAGE));
+  console.log(`  Всего ФЗ в базе ЕБПИ: ${total} (страниц: ${pages})`);
+
+  const collected: DiscoveredLaw[] = [];
+  const seen = new Set<number>();
+  const consume = (docs: AttrSearchDoc[]): void => {
+    for (const doc of docs) {
+      if (seen.has(doc.docid)) continue;
+      seen.add(doc.docid);
+      const law = toDiscoveredLaw(doc);
+      if (law) collected.push(law);
+    }
+  };
+
+  consume(first.docs);
+  for (let page = 2; page <= pages; page += 1) {
+    if (maxLaws && collected.length >= maxLaws) break;
+    const resp = await fetchJson<AttrSearchResponse>(attrsearchUrl(page, ATTRSEARCH_PAGE), {
+      cache: false,
+    });
+    if (resp.error) throw new Error(`attrsearch page ${page}: ${resp.error}`);
+    consume(resp.docs);
+  }
+
+  return maxLaws ? collected.slice(0, maxLaws) : collected;
+}
+
+export async function fetchDiscoveredLawSpecs(maxLaws?: number): Promise<CodexSpec[]> {
+  const laws = await discoverFederalLaws(maxLaws);
+  // Курируемые законы (loader/laws.ts) уже импортируются с «красивыми» slug'ами —
+  // не дублируем их в автоперечне.
+  const curated = new Set(FEDERAL_LAWS.map((law) => law.docid));
+  return laws
+    .filter((law) => !curated.has(law.docid))
+    .map((law) => ({
+      slug: `fz-${law.numberInt}-${law.year}`,
+      shortName: `№ ${law.number}`,
+      title: law.title,
+      sourceUrl: `http://actual.pravo.gov.ru/content/content.html#hash=${law.dochash}&ttl=1`,
+      kind: "LAW" as const,
+      parts: [{ caption: law.title, hash: law.dochash }],
+    }));
 }
 
 export async function fetchLawSpecs(): Promise<CodexSpec[]> {

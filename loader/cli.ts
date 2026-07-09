@@ -7,6 +7,7 @@ import {
   fetchCodex,
   fetchCodexSpecs,
   fetchConstitution,
+  fetchDiscoveredLawSpecs,
   fetchLawSpecs,
 } from "./source";
 import type { CodexSpec } from "./types";
@@ -64,6 +65,31 @@ async function runLawsImport(slugArg?: string): Promise<void> {
   }
 }
 
+async function runDiscoverLaws(arg?: string): Promise<void> {
+  const parsed = arg ? Number.parseInt(arg, 10) : Number.NaN;
+  const maxLaws = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  console.log(
+    maxLaws
+      ? `Автообнаружение федеральных законов (пробный прогон, максимум ${maxLaws})…`
+      : "Автообнаружение федеральных законов…",
+  );
+  const specs = await fetchDiscoveredLawSpecs(maxLaws);
+  console.log(`К импорту после фильтрации: ${specs.length}`);
+  let order = await nextOrder();
+  let done = 0;
+  for (const spec of specs) {
+    try {
+      await importOneCodex(spec, order++);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      discrepancies.push(`ФЗ ${spec.slug} не импортирован: ${message}`);
+      console.error(`    ОШИБКА: ${message}`);
+    }
+    done += 1;
+    if (done % 25 === 0) console.log(`  …обработано ${done}/${specs.length}`);
+  }
+}
+
 async function runFullImport(): Promise<void> {
   const specs = await fetchCodexSpecs();
   console.log(`Найдено кодексов в перечне: ${specs.length}`);
@@ -91,8 +117,12 @@ async function main(): Promise<void> {
     await importConstitution(0);
   } else if (command === "laws") {
     await runLawsImport(arg);
+  } else if (command === "fz") {
+    await runDiscoverLaws(arg);
   } else {
-    console.error('Использование: tsx loader/cli.ts <codex [slug] | constitution | laws [slug] | all>');
+    console.error(
+      'Использование: tsx loader/cli.ts <codex [slug] | constitution | laws [slug] | fz [макс] | all>',
+    );
     process.exitCode = 1;
     return;
   }

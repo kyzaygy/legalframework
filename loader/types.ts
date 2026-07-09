@@ -59,6 +59,23 @@ export interface RedTextResponse {
   error?: string;
 }
 
+export interface AttrSearchDoc {
+  docid: number;
+  docnames: string;
+  docpassing: string;
+  docstate: string;
+  docpass0date: string; // yyyymmdd
+  docpass0number: string; // "451-ФЗ"
+  docpass0numberint: number;
+  dochash: string;
+}
+
+export interface AttrSearchResponse {
+  docs: AttrSearchDoc[];
+  docscount: number;
+  error?: string;
+}
+
 export type UnitTypeName = "PART" | "SECTION" | "CHAPTER" | "PARAGRAPH";
 
 export type StatusName = "ACTIVE" | "REPEALED" | "FUTURE";
