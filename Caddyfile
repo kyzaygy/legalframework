@@ -13,15 +13,10 @@ legalframework.ru {
 		defer
 	}
 
-	# TODO(CSP): Content-Security-Policy не задана. Осмысленная CSP для Next.js
-	# требует per-request nonce: nonce генерируется в middleware Next
-	# (src/middleware.ts), передаётся через заголовок запроса и подставляется
-	# Next'ом в его инлайновые скрипты. Из Caddy это не сделать: статическая
-	# политика потребовала бы script-src 'unsafe-inline' и не защищала бы от XSS.
-	# План: добавить middleware с nonce по гайду
-	# https://nextjs.org/docs/app/guides/content-security-policy,
-	# затем включить здесь Content-Security-Policy-Report-Only и после
-	# проверки отчётов перевести в enforcing.
+	# CSP выставляется приложением (src/middleware.ts): политика с per-request
+	# nonce, который Next подставляет в свои инлайновые скрипты — из Caddy так
+	# не сделать. Сейчас режим Report-Only; после периода наблюдения
+	# переключается флагом CSP_ENFORCE в middleware.
 
 	reverse_proxy app:3000
 }
