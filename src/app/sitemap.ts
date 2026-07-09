@@ -26,11 +26,12 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     orderBy: { id: "asc" },
     skip: id * CHUNK_SIZE,
     take: CHUNK_SIZE,
-    select: { slug: true, code: { select: { slug: true } } },
+    select: { slug: true, editionDate: true, code: { select: { slug: true } } },
   });
 
   const articleEntries: MetadataRoute.Sitemap = articles.map((article) => ({
     url: `${site}/${article.code.slug}/${article.slug}`,
+    ...(article.editionDate ? { lastModified: article.editionDate } : {}),
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
@@ -38,12 +39,13 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   // Статические и списочные URL кладём только в первый чанк.
   if (id !== 0) return articleEntries;
 
-  const codes = await prisma.code.findMany({ select: { slug: true } });
+  const codes = await prisma.code.findMany({ select: { slug: true, editionDate: true } });
   return [
     { url: site, changeFrequency: "weekly", priority: 1 },
     { url: `${site}/zakony`, changeFrequency: "weekly", priority: 0.7 },
     ...codes.map((code) => ({
       url: `${site}/${code.slug}`,
+      ...(code.editionDate ? { lastModified: code.editionDate } : {}),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

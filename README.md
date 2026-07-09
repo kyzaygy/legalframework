@@ -44,6 +44,7 @@ npx prisma generate
 npm run import:codex        # разведка: один кодекс (Семейный)
 npm run import:all          # все кодексы + Конституция
 npm run dev
+npm test                    # юнит-тесты парсеров и утилит (vitest)
 ```
 
 ## Загрузка данных

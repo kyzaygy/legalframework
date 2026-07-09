@@ -198,6 +198,22 @@ curl -s https://legalframework.ru/robots.txt
 cd /opt/legalframework && docker compose run --rm app npm run import:all
 ```
 
+Страницы отдаются из кэша (сутки), поэтому после импорта сбросьте его, чтобы
+обновлённые тексты появились сразу. Задайте `REVALIDATE_SECRET` в `.env`
+(`openssl rand -hex 24`, затем `docker compose up -d app`) и дёрните эндпоинт:
+
+```bash
+curl -fsS -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+  https://legalframework.ru/api/revalidate
+```
+
+Без секрета эндпоинт отключён, а кэш истечёт сам не позднее чем через сутки.
+
+Импорт защищён от сломанной разметки источника: если новый прогон принёс
+менее половины статей уже наполненного кодекса, транзакция откатывается,
+старый текст остаётся, а расхождение попадает в итоговый отчёт прогона —
+проверяйте его в логе cron.
+
 ### Импорт всех федеральных законов (`import:fz`)
 
 `import:all` загружает кодексы, Конституцию и курируемый набор законов. Полный
@@ -233,11 +249,31 @@ docker compose run --rm app npm run import:fz
 - Для еженедельного обновления можно добавить `import:fz` в cron рядом с
   `import:all` (но учтите длительность — лучше раз в месяц и в тихие часы).
 
-Пример еженедельного cron (по понедельникам в 4:00):
+Пример еженедельного cron (по понедельникам в 4:00, со сбросом кэша после
+импорта; `REVALIDATE_SECRET` подставьте значением, cron не читает `.env`):
 
 ```bash
-( crontab -l 2>/dev/null; echo "0 4 * * 1 cd /opt/legalframework && docker compose run --rm app npm run import:all >> /var/log/kodeksy-import.log 2>&1" ) | crontab -
+( crontab -l 2>/dev/null; echo "0 4 * * 1 cd /opt/legalframework && docker compose run --rm app npm run import:all >> /var/log/kodeksy-import.log 2>&1 && curl -fsS -X POST -H 'x-revalidate-secret: <секрет>' https://legalframework.ru/api/revalidate >> /var/log/kodeksy-import.log 2>&1" ) | crontab -
 ```
+
+### Резервные копии базы данных
+
+Полный импорт занимает часы, поэтому базу дешевле бэкапить, чем перезаливать.
+Ежедневный дамп с ротацией за 7 дней:
+
+```bash
+mkdir -p /opt/legalframework/backups
+( crontab -l 2>/dev/null; echo "30 3 * * * cd /opt/legalframework && docker compose exec -T db pg_dump -U kodeksy -d kodeksy -Fc > backups/kodeksy-\$(date +\%F).dump && find backups -name '*.dump' -mtime +7 -delete" ) | crontab -
+```
+
+Восстановление в чистую базу:
+
+```bash
+docker compose exec -T db pg_restore -U kodeksy -d kodeksy --clean --if-exists < backups/kodeksy-2026-07-06.dump
+```
+
+Дампы лежат на том же диске, что и база — критичные копируйте на другой хост
+(rclone/scp), иначе смерть VPS уносит и базу, и бэкапы.
 
 Команды управления:
 

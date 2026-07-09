@@ -49,7 +49,15 @@ function NoResults({ query }: { query: string }) {
   );
 }
 
-function Results({ query, hits }: { query: string; hits: SearchHit[] }) {
+function Results({
+  query,
+  hits,
+  hasMore,
+}: {
+  query: string;
+  hits: SearchHit[];
+  hasMore: boolean;
+}) {
   return (
     <div className="search-wrap">
       <div className="search-head">
@@ -57,6 +65,7 @@ function Results({ query, hits }: { query: string; hits: SearchHit[] }) {
           Найдено по запросу «<span className="q">{query}</span>»
         </h1>
         <div className="count">
+          {hasMore ? "более " : ""}
           {hits.length} {pluralizeArticles(hits.length)}
         </div>
       </div>
@@ -72,6 +81,11 @@ function Results({ query, hits }: { query: string; hits: SearchHit[] }) {
           </Link>
         ))}
       </div>
+      {hasMore && (
+        <p className="search-more">
+          Показаны первые {hits.length} результатов. Уточните запрос, чтобы найти нужную статью.
+        </p>
+      )}
     </div>
   );
 }
@@ -101,9 +115,15 @@ export default async function SearchPage({
     if (article) redirect(`/${requisite.codeSlug}/${requisite.articleSlug}`);
   }
 
-  const hits = await searchArticles(query);
+  const { hits, hasMore } = await searchArticles(query);
 
   return (
-    <div className="shell">{hits.length === 0 ? <NoResults query={query} /> : <Results query={query} hits={hits} />}</div>
+    <div className="shell">
+      {hits.length === 0 ? (
+        <NoResults query={query} />
+      ) : (
+        <Results query={query} hits={hits} hasMore={hasMore} />
+      )}
+    </div>
   );
 }
