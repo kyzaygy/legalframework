@@ -10,7 +10,10 @@ const SKIP_TOKENS = new Set(["ст", "статья", "статьи", "рф"]);
 export function parseRequisite(raw: string): Requisite | null {
   const tokens = raw
     .toLowerCase()
-    .replace(/[.,]/g, " ")
+    .replace(/,/g, " ")
+    // Точка внутри составного номера (105.1) — часть номера; остальные
+    // точки («ст.», «ук.») — разделители.
+    .replace(/(?<!\d)\.|\.(?!\d)/g, " ")
     .split(/\s+/)
     .filter(Boolean);
 

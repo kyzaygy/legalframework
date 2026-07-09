@@ -13,6 +13,16 @@ export const metadata: Metadata = {
   },
   description:
     "Все действующие кодексы Российской Федерации и Конституция в актуальной редакции. Поиск статьи по номеру и по слову из закона.",
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: "Кодексы РФ",
+    url: siteUrl,
+    title: "Кодексы и Конституция РФ — бесплатно, в действующей редакции",
+    description:
+      "Все действующие кодексы Российской Федерации и Конституция в актуальной редакции. Поиск статьи по номеру и по слову из закона.",
+    images: [{ url: "/app-icon-512.png", width: 512, height: 512 }],
+  },
   appleWebApp: {
     capable: true,
     title: "Legal Framework",

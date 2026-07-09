@@ -31,6 +31,24 @@ function detectCharset(contentType: string | null, bytes: Uint8Array): string {
   return (fromMeta ?? "utf-8").toLowerCase();
 }
 
+class HttpStatusError extends Error {
+  constructor(
+    readonly status: number,
+    url: string,
+  ) {
+    super(`HTTP ${status} for ${url}`);
+  }
+}
+
+// Повторять есть смысл только сетевые сбои, 5xx и 429; остальные 4xx
+// детерминированы — повторы лишь зря дёргают портал.
+function isRetryable(error: unknown): boolean {
+  if (error instanceof HttpStatusError) {
+    return error.status >= 500 || error.status === 429;
+  }
+  return true;
+}
+
 async function fetchFresh(url: string, attempt = 1): Promise<string> {
   const maxAttempts = 4;
   try {
@@ -39,13 +57,13 @@ async function fetchFresh(url: string, attempt = 1): Promise<string> {
       headers: { "User-Agent": USER_AGENT, Accept: "*/*" },
       signal: AbortSignal.timeout(60_000),
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
+    if (!response.ok) throw new HttpStatusError(response.status, url);
     const bytes = new Uint8Array(await response.arrayBuffer());
     const charset = detectCharset(response.headers.get("content-type"), bytes);
     const decoder = new TextDecoder(charset === "utf8" ? "utf-8" : charset);
     return decoder.decode(bytes);
   } catch (error) {
-    if (attempt >= maxAttempts) throw error;
+    if (attempt >= maxAttempts || !isRetryable(error)) throw error;
     await delay(attempt * 1500);
     return fetchFresh(url, attempt + 1);
   }

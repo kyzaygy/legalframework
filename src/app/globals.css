@@ -794,6 +794,24 @@ main {
   }
 }
 
+.zk-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 8px;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui-sm);
+}
+
+.zk-pager a {
+  color: var(--fg-brand);
+}
+
+.zk-pager .zk-page {
+  color: var(--fg-faint);
+}
+
 /* ——— Оглавление кодекса ——— */
 
 .toc-head {
@@ -882,6 +900,11 @@ main {
 
 .tbranch.lvl1 .lbl {
   font-weight: var(--weight-medium);
+}
+
+/* Переход по якорю из хлебных крошек статьи. */
+.tnode {
+  scroll-margin-top: 16px;
 }
 
 .tkids {
@@ -1184,6 +1207,13 @@ main {
 
 .result .r-snip mark {
   font-weight: var(--weight-semibold);
+}
+
+.search-more {
+  margin: 18px 0 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui-sm);
+  color: var(--fg-faint);
 }
 
 /* ——— Пустые состояния ——— */

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LawBody } from "@/components/LawBody";
-import { formatDate } from "@/lib/format";
+import { formatDate, truncateAtWord } from "@/lib/format";
 import { getArticle } from "@/lib/queries";
 import { isValidArticleSlug, isValidCodeSlug } from "@/lib/validate";
 
@@ -27,6 +27,19 @@ function crumbLabel(crumb: { type: string; number: string | null; title: string 
   return crumb.title;
 }
 
+function articleHeading(article: { number: string; title: string | null }): string {
+  return article.title
+    ? `Статья ${article.number}. ${article.title}`
+    : `Статья ${article.number}`;
+}
+
+function toIsoDate(value: Date | string | null): string | null {
+  if (!value) return null;
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
 interface ArticleParams {
   params: Promise<{ codeSlug: string; article: string }>;
 }
@@ -36,14 +49,19 @@ export async function generateMetadata({ params }: ArticleParams): Promise<Metad
   if (!isValidCodeSlug(codeSlug) || !isValidArticleSlug(article)) return {};
   const data = await getArticle(codeSlug, article);
   if (!data) return {};
-  const heading = data.article.title
-    ? `Статья ${data.article.number}. ${data.article.title}`
-    : `Статья ${data.article.number}`;
-  const title = `${heading} ${data.code.shortName}`;
+  const title = `${articleHeading(data.article)} ${data.code.shortName}`;
+  const description = truncateAtWord(data.article.bodyText, 160);
+  const canonical = `/${codeSlug}/${article}`;
   return {
     title,
-    description: data.article.bodyText.slice(0, 160),
-    alternates: { canonical: `/${codeSlug}/${article}` },
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url: canonical,
+    },
   };
 }
 
@@ -57,15 +75,61 @@ export default async function ArticlePage({ params }: ArticleParams) {
   const { code, article: art, breadcrumbs, prev, next } = data;
   const edition = formatDate(art.editionDate ?? code.editionDate);
 
+  const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
+  const pageUrl = `${siteUrl}/${code.slug}/${art.slug}`;
+  const isoModified = toIsoDate(art.editionDate ?? code.editionDate);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Legislation",
+        name: articleHeading(art),
+        isPartOf: { "@type": "Legislation", name: code.title },
+        inLanguage: "ru",
+        url: pageUrl,
+        legislationLegalForce:
+          art.status === "ACTIVE"
+            ? "https://schema.org/InForce"
+            : "https://schema.org/NotInForce",
+        ...(isoModified ? { dateModified: isoModified } : {}),
+        ...(code.sourceUrl ? { sameAs: code.sourceUrl } : {}),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: code.shortName,
+            item: `${siteUrl}/${code.slug}`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: `Статья ${art.number}`,
+            item: pageUrl,
+          },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="shell">
+      <script
+        type="application/ld+json"
+        // «<» экранируется, чтобы содержимое из БД не могло закрыть тег script.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c") }}
+      />
       <article className="article">
         <nav className="crumbs">
           <Link href={`/${code.slug}`}>{code.shortName}</Link>
           <span className="sep">›</span>
-          {breadcrumbs.map((crumb, index) => (
-            <span key={index}>
-              <span className="lnk">{crumbLabel(crumb)}</span>
+          {breadcrumbs.map((crumb) => (
+            <span key={crumb.anchor}>
+              <Link className="lnk" href={`/${code.slug}#${crumb.anchor}`}>
+                {crumbLabel(crumb)}
+              </Link>
               <span className="sep">›</span>
             </span>
           ))}

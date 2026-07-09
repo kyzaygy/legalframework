@@ -33,6 +33,7 @@ services:
       PRAVO_API_BASE: ${PRAVO_API_BASE:-http://actual.pravo.gov.ru:8000/api/ebpi/}
       PRAVO_BPA: ${PRAVO_BPA:-ebpi}
       SITE_URL: ${SITE_URL:-https://legalframework.ru}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
     volumes:
       - ./loader/.cache/raw:/app/loader/.cache/raw
     expose:
