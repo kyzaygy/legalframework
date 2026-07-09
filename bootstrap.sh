@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="https://github.com/kyzaygy/legalframework.git"
+# Для приватного репозитория переопределите REPO на SSH-адрес (нужен
+# deploy-ключ, см. DEPLOY.md раздел 9.1):
+#   REPO=git@github.com:kyzaygy/legalframework.git ./bootstrap.sh
+REPO="${REPO:-https://github.com/kyzaygy/legalframework.git}"
 DIR="/opt/legalframework"
 
 echo "==> Docker"

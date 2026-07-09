@@ -334,7 +334,89 @@ devDependencies). Это осознанный компромисс в польз
 
 ---
 
-## 9. Если что-то пошло не так
+## 9. Автодеплой и приватный репозиторий
+
+### 9.1. Перевод репозитория в приватный
+
+GitHub → Settings → General → Danger Zone → Change visibility → Private.
+
+После этого анонимный `git pull` по HTTPS на сервере перестанет работать.
+Переведите сервер на SSH с deploy-ключом (доступ только на чтение и только к
+этому репозиторию):
+
+```bash
+# на сервере: ключ без пароля специально для деплоя
+ssh-keygen -t ed25519 -N "" -f /root/.ssh/github_deploy -C "legalframework-deploy"
+cat /root/.ssh/github_deploy.pub
+```
+
+Публичный ключ добавьте в GitHub → Settings → **Deploy keys** → Add deploy key
+(галку «Allow write access» НЕ ставить). Затем на сервере:
+
+```bash
+cat >> /root/.ssh/config <<'EOF'
+Host github.com
+    IdentityFile /root/.ssh/github_deploy
+    IdentitiesOnly yes
+EOF
+cd /opt/legalframework
+git remote set-url origin git@github.com:kyzaygy/legalframework.git
+git pull --ff-only        # проверка: должно работать без пароля
+```
+
+Однострочник из раздела 0 для приватного репозитория выполняется так (после
+установки deploy-ключа):
+
+```bash
+curl -fsSL ... # raw-ссылка приватного репо требует токен; проще склонировать по SSH:
+git clone git@github.com:kyzaygy/legalframework.git /opt/legalframework
+cd /opt/legalframework && ./bootstrap.sh
+```
+
+CI, Dependabot и автодеплой (ниже) с приватностью работают без изменений.
+
+### 9.2. Автодеплой из GitHub Actions
+
+После зелёной сборки в `main` джоба `deploy` из `.github/workflows/ci.yml`
+сама выкатывает изменения на сервер. Настройка — три секрета в
+GitHub → Settings → Secrets and variables → **Actions**:
+
+| Секрет           | Значение                                                       |
+|------------------|----------------------------------------------------------------|
+| `DEPLOY_HOST`    | IP или хост сервера (например, `legalframework.ru`)            |
+| `DEPLOY_USER`    | `root`                                                         |
+| `DEPLOY_SSH_KEY` | **приватный** ключ для входа на сервер (см. ниже)              |
+
+Ключ для Actions заведите отдельный (не тот, которым входите сами, и не
+deploy-ключ GitHub):
+
+```bash
+# на своей машине
+ssh-keygen -t ed25519 -N "" -f actions_deploy -C "github-actions-deploy"
+# публичную часть — на сервер:
+cat actions_deploy.pub | ssh root@legalframework.ru 'cat >> /root/.ssh/authorized_keys'
+# приватную часть (файл actions_deploy целиком) — в секрет DEPLOY_SSH_KEY,
+# после чего локальные файлы удалите: rm actions_deploy actions_deploy.pub
+```
+
+Пока секреты не заданы, джоба деплоя тихо пропускается — ничего не ломается.
+Деплой не запускает импорт корпуса и не сбрасывает кэш страниц — это по-прежнему
+cron/руки (разделы 7 и 8).
+
+## 10. Мониторинг доступности
+
+Приложение отдаёт `GET /api/health`: `200 {"ok":true}` когда живы и приложение,
+и БД; `503` — если БД недоступна.
+
+Подключите любой бесплатный аптайм-мониторинг (UptimeRobot, HetrixTools,
+Better Stack):
+
+1. Тип проверки — HTTP(S), URL — `https://legalframework.ru/api/health`,
+   интервал 1–5 минут, критерий — код ответа 200.
+2. Алерты — на почту и/или в Telegram (у всех сервисов есть интеграция).
+3. Также полезна проверка на строку `"ok":true` в теле ответа.
+
+## 11. Если что-то пошло не так
 
 - **Падает на миграциях / подключении к БД.** Убедитесь, что `.env` создан и
   содержит `POSTGRES_PASSWORD`. Посмотрите `docker compose logs db` и

@@ -36,3 +36,49 @@ jobs:
 
       - name: Audit (high and critical)
         run: npm audit --audit-level=high
+
+  # Автодеплой на VPS после зелёной сборки в main. Требует секретов
+  # DEPLOY_SSH_KEY / DEPLOY_HOST / DEPLOY_USER (Settings → Secrets → Actions);
+  # без них джоба тихо пропускается. Подробности — DEPLOY.md, раздел 9.
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Check deploy secrets
+        id: check
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::DEPLOY_SSH_KEY не задан — автодеплой пропущен."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        if: steps.check.outputs.configured == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'EOF'
+          set -euo pipefail
+          cd /opt/legalframework
+          git pull --ff-only
+          docker compose build
+          docker compose run --rm app npx prisma migrate deploy
+          docker compose up -d
+          docker compose ps
+          EOF
