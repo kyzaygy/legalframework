@@ -1446,3 +1446,120 @@ main {
     width: 100%;
   }
 }
+
+/* ——— Якоря пунктов статьи ——— */
+
+.law .node {
+  scroll-margin-top: calc(var(--topbar-h) + 12px);
+}
+
+.law a.mk-anchor {
+  color: var(--fg-brand);
+  text-decoration: none;
+  position: relative;
+}
+
+.law a.mk-anchor:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.law .sub a.mk-anchor {
+  color: var(--fg-secondary);
+}
+
+.mk-copied {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  color: var(--fg-on-brand);
+  background: var(--ink-1);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+/* ——— Перекрёстные ссылки в тексте ——— */
+
+.law a.law-ref {
+  color: var(--fg-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--oxblood-200);
+}
+
+.law a.law-ref:hover {
+  color: var(--fg-link-hover);
+  text-decoration-color: currentColor;
+}
+
+/* ——— Футер: навигация ——— */
+
+.foot-nav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  font-size: var(--text-ui-sm);
+}
+
+/* ——— Лента изменений ——— */
+
+.chg-feed {
+  margin: 20px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 720px;
+}
+
+.chg-date {
+  font-family: var(--font-serif);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chg-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  line-height: 1.45;
+}
+
+.chg-code {
+  flex: none;
+  min-width: 84px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  color: var(--fg-brand);
+}
+
+@media (max-width: 640px) {
+  .chg-item {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chg-code {
+    min-width: 0;
+  }
+}

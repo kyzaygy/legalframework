@@ -43,6 +43,7 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
   return [
     { url: site, changeFrequency: "weekly", priority: 1 },
     { url: `${site}/zakony`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${site}/izmeneniya`, changeFrequency: "daily", priority: 0.5 },
     ...codes.map((code) => ({
       url: `${site}/${code.slug}`,
       ...(code.editionDate ? { lastModified: code.editionDate } : {}),

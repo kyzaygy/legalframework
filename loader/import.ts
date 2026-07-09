@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import { createHash } from "node:crypto";
+import type { ChangeKind, Prisma, PrismaClient } from "@prisma/client";
 import { discrepancies } from "./parse";
 import type { CodexSpec, ParsedCode, ParsedUnit } from "./types";
 
@@ -15,6 +16,78 @@ export interface ImportSummary {
 // старый корпус остаётся на месте, расхождение уходит в лог.
 const MIN_ARTICLES_FOR_GUARD = 20;
 const CREATE_CHUNK = 400;
+// Если у документа изменилось больше статей — пишем в журнал одну сводную
+// запись CODE_UPDATED вместо потока построчных (обновилась вся редакция).
+const GRANULAR_CHANGES_LIMIT = 50;
+
+function bodyHash(text: string): string {
+  return createHash("md5").update(text).digest("hex");
+}
+
+interface ChangeRow {
+  codeSlug: string;
+  codeShort: string;
+  kind: ChangeKind;
+  articleNumber?: string;
+  articleSlug?: string;
+  articleTitle?: string;
+  count?: number;
+}
+
+interface PreviousArticle {
+  number: string;
+  title: string | null;
+  hash: string;
+}
+
+function diffChanges(
+  spec: CodexSpec,
+  previous: Map<string, PreviousArticle>,
+  next: { slug: string; number: string; title: string | null; bodyText: string }[],
+): ChangeRow[] {
+  const base = { codeSlug: spec.slug, codeShort: spec.shortName };
+  if (previous.size === 0) {
+    return [{ ...base, kind: "CODE_ADDED" }];
+  }
+
+  const changes: ChangeRow[] = [];
+  const nextSlugs = new Set(next.map((article) => article.slug));
+  for (const article of next) {
+    const before = previous.get(article.slug);
+    if (!before) {
+      changes.push({
+        ...base,
+        kind: "ARTICLE_ADDED",
+        articleNumber: article.number,
+        articleSlug: article.slug,
+        articleTitle: article.title ?? undefined,
+      });
+    } else if (before.hash !== bodyHash(article.bodyText) || before.title !== article.title) {
+      changes.push({
+        ...base,
+        kind: "ARTICLE_UPDATED",
+        articleNumber: article.number,
+        articleSlug: article.slug,
+        articleTitle: article.title ?? undefined,
+      });
+    }
+  }
+  for (const [slug, before] of previous) {
+    if (!nextSlugs.has(slug)) {
+      changes.push({
+        ...base,
+        kind: "ARTICLE_REMOVED",
+        articleNumber: before.number,
+        articleTitle: before.title ?? undefined,
+      });
+    }
+  }
+
+  if (changes.length > GRANULAR_CHANGES_LIMIT) {
+    return [{ ...base, kind: "CODE_UPDATED", count: changes.length }];
+  }
+  return changes;
+}
 
 function chunked<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -99,13 +172,24 @@ export async function importCode(
         },
       });
 
-      const existing = await tx.article.count({ where: { codeId: code.id } });
+      // Снимок прежнего состояния для журнала изменений и защитной проверки.
+      const previousRows = await tx.article.findMany({
+        where: { codeId: code.id },
+        select: { slug: true, number: true, title: true, bodyText: true },
+      });
+      const existing = previousRows.length;
       if (existing >= MIN_ARTICLES_FOR_GUARD && parsed.articles.length < existing / 2) {
         throw new Error(
           `подозрительное сокращение статей в ${spec.slug}: было ${existing}, ` +
             `стало ${parsed.articles.length} — импорт отменён, старый текст сохранён`,
         );
       }
+      const previous = new Map<string, PreviousArticle>(
+        previousRows.map((row) => [
+          row.slug,
+          { number: row.number, title: row.title, hash: bodyHash(row.bodyText) },
+        ]),
+      );
 
       await tx.article.deleteMany({ where: { codeId: code.id } });
       await tx.structuralUnit.deleteMany({ where: { codeId: code.id } });
@@ -134,6 +218,11 @@ export async function importCode(
 
       for (const batch of chunked(articleData, CREATE_CHUNK)) {
         await tx.article.createMany({ data: batch });
+      }
+
+      const changes = diffChanges(spec, previous, articleData);
+      if (changes.length > 0) {
+        await tx.importChange.createMany({ data: changes });
       }
     },
     // Крупные кодексы (НК, КоАП) — тысячи статей; дефолтных 5 секунд

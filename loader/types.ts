@@ -76,7 +76,7 @@ export interface AttrSearchResponse {
   error?: string;
 }
 
-export type UnitTypeName = "PART" | "SECTION" | "CHAPTER" | "PARAGRAPH";
+export type UnitTypeName = "PART" | "SECTION" | "CHAPTER" | "PARAGRAPH" | "APPENDIX";
 
 export type StatusName = "ACTIVE" | "REPEALED" | "FUTURE";
 

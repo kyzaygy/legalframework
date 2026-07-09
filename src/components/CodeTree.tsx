@@ -10,6 +10,7 @@ const TYPE_LABEL: Record<string, string> = {
   SECTION: "Раздел",
   CHAPTER: "Глава",
   PARAGRAPH: "§",
+  APPENDIX: "Приложение",
 };
 
 function unitLabel(unit: TreeUnit): string {

@@ -23,6 +23,7 @@ const TYPE_ANCHOR: Record<string, string> = {
   SECTION: "razdel",
   CHAPTER: "glava",
   PARAGRAPH: "par",
+  APPENDIX: "prilozhenie",
 };
 
 export function unitAnchor(

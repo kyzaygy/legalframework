@@ -97,6 +97,7 @@ const UNIT_TYPE_MAP: Record<string, UnitTypeName> = {
   глава: "CHAPTER",
   параграф: "PARAGRAPH",
   "§": "PARAGRAPH",
+  приложение: "APPENDIX",
 };
 
 function mapUnitType(unit: string): UnitTypeName {

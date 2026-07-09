@@ -69,6 +69,31 @@ enum UnitType {
   SECTION
   CHAPTER
   PARAGRAPH
+  APPENDIX
+}
+
+// Журнал изменений корпуса: пишется импортёром при каждом прогоне,
+// показывается на странице «Изменения».
+model ImportChange {
+  id            String     @id @default(cuid())
+  at            DateTime   @default(now())
+  codeSlug      String
+  codeShort     String
+  kind          ChangeKind
+  articleNumber String?
+  articleSlug   String?
+  articleTitle  String?
+  count         Int?
+
+  @@index([at])
+}
+
+enum ChangeKind {
+  CODE_ADDED
+  CODE_UPDATED
+  ARTICLE_ADDED
+  ARTICLE_UPDATED
+  ARTICLE_REMOVED
 }
 
 enum ArticleStatus {
