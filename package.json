@@ -14,6 +14,7 @@
     "db:setup": "prisma migrate deploy && prisma generate",
     "import:codex": "tsx loader/cli.ts codex",
     "import:laws": "tsx loader/cli.ts laws",
+    "import:fz": "tsx loader/cli.ts fz",
     "import:all": "tsx loader/cli.ts all"
   },
   "dependencies": {

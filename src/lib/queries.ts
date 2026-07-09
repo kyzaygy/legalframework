@@ -28,6 +28,20 @@ export function getCodes() {
   return prisma.code.findMany({ orderBy: { order: "asc" } });
 }
 
+export interface LawListItem {
+  slug: string;
+  shortName: string;
+  title: string;
+}
+
+export function getLaws(): Promise<LawListItem[]> {
+  return prisma.code.findMany({
+    where: { kind: "LAW" },
+    orderBy: { title: "asc" },
+    select: { slug: true, shortName: true, title: true },
+  });
+}
+
 export function getCodeBySlug(slug: string) {
   return prisma.code.findUnique({ where: { slug } });
 }

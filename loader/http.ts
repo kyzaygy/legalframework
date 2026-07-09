@@ -51,15 +51,24 @@ async function fetchFresh(url: string, attempt = 1): Promise<string> {
   }
 }
 
-export async function fetchText(url: string): Promise<string> {
+export interface FetchOptions {
+  // Списки документов меняются со временем; для них кэш отключается,
+  // чтобы каждый прогон видел свежие данные. Тексты редакций кэшируются.
+  cache?: boolean;
+}
+
+export async function fetchText(url: string, options: FetchOptions = {}): Promise<string> {
+  const useCache = options.cache !== false;
   const path = cachePath(url);
-  if (existsSync(path)) return readFileSync(path, "utf-8");
+  if (useCache && existsSync(path)) return readFileSync(path, "utf-8");
   const text = await fetchFresh(url);
-  mkdirSync(cacheDir, { recursive: true });
-  writeFileSync(path, text, "utf-8");
+  if (useCache) {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(path, text, "utf-8");
+  }
   return text;
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
-  return JSON.parse(await fetchText(url)) as T;
+export async function fetchJson<T>(url: string, options: FetchOptions = {}): Promise<T> {
+  return JSON.parse(await fetchText(url, options)) as T;
 }

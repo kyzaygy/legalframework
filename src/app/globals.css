@@ -674,6 +674,126 @@ main {
   color: var(--fg-body);
 }
 
+/* ——— Заголовок раздела законов + ссылка на каталог ——— */
+
+.laws-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.laws-head .codes-label {
+  margin: 36px 0 12px;
+}
+
+.laws-all {
+  font-family: var(--font-sans);
+  font-size: var(--text-ui-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg-link);
+  white-space: nowrap;
+}
+
+/* ——— Каталог федеральных законов (/zakony) ——— */
+
+.zk-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 18px;
+}
+
+.zk-filter input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  color: var(--fg-body);
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  height: 42px;
+  padding: 0 14px;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.zk-filter input:focus {
+  outline: none;
+  border-color: var(--oxblood-600);
+  box-shadow: 0 0 0 3px var(--oxblood-100);
+}
+
+.zk-filter input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.zk-count {
+  flex: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui-sm);
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+
+.zk-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.zk-item {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--fg-body);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.zk-list .zk-item:last-child {
+  border-bottom: none;
+}
+
+.zk-item:hover {
+  background: var(--surface-sunken);
+  text-decoration: none;
+}
+
+.zk-num {
+  flex: none;
+  min-width: 84px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  color: var(--fg-brand);
+}
+
+.zk-title {
+  color: var(--fg-secondary);
+  line-height: 1.4;
+}
+
+.zk-item:hover .zk-title {
+  color: var(--fg-body);
+}
+
+@media (max-width: 640px) {
+  .zk-item {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .zk-num {
+    min-width: 0;
+  }
+}
+
 /* ——— Оглавление кодекса ——— */
 
 .toc-head {
