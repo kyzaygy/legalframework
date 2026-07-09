@@ -289,3 +289,57 @@ export async function searchArticles(query: string): Promise<SearchResult> {
     .map((hit) => ({ ...hit, snippet: toSafeSnippet(hit.snippet) }));
   return { hits, hasMore };
 }
+
+// ——— Перекрёстные ссылки в текстах статей ———
+
+import type { LawRef } from "./lawLinks";
+
+// Проверка существования целевых статей для автолинковки: по каждому
+// упомянутому кодексу один индексный запрос. Возвращает "codeSlug/number" →
+// слаг статьи. Не кэшируется: запросы дешёвые и специфичны для статьи.
+export async function resolveArticleRefs(refs: LawRef[]): Promise<Record<string, string>> {
+  const byCode = new Map<string, Set<string>>();
+  for (const ref of refs) {
+    const numbers = byCode.get(ref.codeSlug) ?? new Set<string>();
+    numbers.add(ref.number);
+    byCode.set(ref.codeSlug, numbers);
+  }
+
+  const resolved: Record<string, string> = {};
+  for (const [codeSlug, numbers] of byCode) {
+    const rows = await prisma.article.findMany({
+      where: { code: { slug: codeSlug }, number: { in: [...numbers] } },
+      select: { number: true, slug: true },
+    });
+    for (const row of rows) {
+      const key = `${codeSlug}/${row.number}`;
+      // При дублях номера (slug с суффиксом -2) оставляем первый.
+      if (!(key in resolved)) resolved[key] = row.slug;
+    }
+  }
+  return resolved;
+}
+
+// ——— Лента изменений корпуса ———
+
+export interface ChangeItem {
+  id: string;
+  at: CachedDate;
+  codeSlug: string;
+  codeShort: string;
+  kind: string;
+  articleNumber: string | null;
+  articleSlug: string | null;
+  articleTitle: string | null;
+  count: number | null;
+}
+
+export const getRecentChanges = unstable_cache(
+  (): Promise<ChangeItem[]> =>
+    prisma.importChange.findMany({
+      orderBy: { at: "desc" },
+      take: 400,
+    }),
+  ["changes"],
+  contentCache,
+);

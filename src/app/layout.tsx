@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import "./globals.css";
 import { TopBar } from "@/components/TopBar";
 
@@ -46,6 +47,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <footer className="foot">
           <div className="shell">
+            <nav className="foot-nav">
+              <Link href="/zakony">Федеральные законы</Link>
+              <Link href="/izmeneniya">Изменения в законах</Link>
+            </nav>
             <span className="foot-note">
               Источник текстов — официальный портал pravo.gov.ru, действующая редакция.
             </span>

@@ -13,6 +13,7 @@ const TYPE_LABEL: Record<string, string> = {
   SECTION: "Раздел",
   CHAPTER: "Глава",
   PARAGRAPH: "§",
+  APPENDIX: "Приложение",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -158,7 +159,7 @@ export default async function ArticlePage({ params }: ArticleParams) {
           </span>
         </div>
 
-        <LawBody bodyHtml={art.bodyHtml} />
+        <LawBody bodyHtml={art.bodyHtml} codeSlug={code.slug} />
 
         <nav className="art-nav">
           {prev ? (
